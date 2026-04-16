@@ -8,7 +8,11 @@ import stat
 import sys
 from pathlib import Path
 
-from .security_doctor_report import SecurityCheckResult, SecurityReport, SecuritySeverity
+from .security_doctor_report import (
+    SecurityCheckResult,
+    SecurityReport,
+    SecuritySeverity,
+)
 
 
 def check_state_dir_permissions(report: SecurityReport) -> None:

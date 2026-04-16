@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import os
 
-from .security_doctor_report import SecurityCheckResult, SecurityReport, SecuritySeverity
+from .security_doctor_report import (
+    SecurityCheckResult,
+    SecurityReport,
+    SecuritySeverity,
+)
 
 try:
     from .connector_allowlist_posture import (

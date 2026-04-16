@@ -13,6 +13,12 @@ import time
 import uuid
 from typing import Any, Dict, Optional, Tuple
 
+from .audit_pipeline import (
+    AuditVerificationResult,
+    LocalFileAuditSink,
+    read_last_entry_hash_from_chain,
+)
+from .audit_pipeline import verify_audit_chain as verify_audit_chain_impl
 from .redaction import redact_json, stable_redaction_tag
 
 logger = logging.getLogger("ComfyUI-OpenClaw.services.audit")
@@ -42,6 +48,15 @@ AUDIT_LOG_PATH = (
     or os.environ.get("MOLTBOT_AUDIT_LOG_PATH")
     or _default_audit_log_path()
 )
+
+
+def _default_audit_chain_key_path() -> str:
+    override = os.environ.get("OPENCLAW_AUDIT_CHAIN_KEY_PATH") or os.environ.get(
+        "MOLTBOT_AUDIT_CHAIN_KEY_PATH"
+    )
+    if override:
+        return override
+    return f"{AUDIT_LOG_PATH}.key"
 
 
 def _env_int(primary: str, legacy: str, default: int) -> int:
@@ -109,7 +124,41 @@ def _get_audit_chain_key() -> bytes:
         raw = os.environ.get("OPENCLAW_AUDIT_CHAIN_KEY") or os.environ.get(
             "MOLTBOT_AUDIT_CHAIN_KEY"
         )
-        _AUDIT_CHAIN_KEY = raw.encode("utf-8") if raw else secrets.token_bytes(32)
+        if raw:
+            _AUDIT_CHAIN_KEY = raw.encode("utf-8")
+            return _AUDIT_CHAIN_KEY
+
+        key_path = _default_audit_chain_key_path()
+        try:
+            with open(key_path, "r", encoding="utf-8") as handle:
+                persisted = handle.read().strip()
+            if persisted:
+                _AUDIT_CHAIN_KEY = bytes.fromhex(persisted)
+                return _AUDIT_CHAIN_KEY
+        except Exception:
+            pass
+
+        # CRITICAL: the audit chain key must stay stable across restarts or
+        # rotated-chain verification becomes impossible after the first reboot.
+        generated = secrets.token_bytes(32)
+        try:
+            os.makedirs(os.path.dirname(os.path.abspath(key_path)), exist_ok=True)
+        except Exception:
+            pass
+        try:
+            with open(key_path, "x", encoding="utf-8") as handle:
+                handle.write(generated.hex())
+            try:
+                os.chmod(key_path, 0o600)
+            except Exception:
+                pass
+            _AUDIT_CHAIN_KEY = generated
+        except FileExistsError:
+            with open(key_path, "r", encoding="utf-8") as handle:
+                persisted = handle.read().strip()
+            _AUDIT_CHAIN_KEY = bytes.fromhex(persisted) if persisted else generated
+        except Exception:
+            _AUDIT_CHAIN_KEY = generated
     return _AUDIT_CHAIN_KEY
 
 
@@ -126,54 +175,25 @@ def _chain_hash(prev_hash: str, entry: Dict[str, Any]) -> str:
     ).hex()
 
 
-def _rotate_if_needed(path: str) -> None:
+def _build_audit_sink(path: str) -> LocalFileAuditSink:
     max_bytes, backups = _audit_limits()
-    if max_bytes <= 0 or backups < 0:
-        return
-    if not os.path.exists(path):
-        return
+    return LocalFileAuditSink(
+        path=path,
+        max_bytes=max_bytes,
+        backups=backups,
+        chain_hash=_chain_hash,
+    )
+
+
+def _rotate_if_needed(path: str) -> None:
     try:
-        if os.path.getsize(path) < max_bytes:
-            return
-        if backups == 0:
-            os.remove(path)
-            return
-        for idx in range(backups, 0, -1):
-            src = f"{path}.{idx}"
-            dst = f"{path}.{idx + 1}"
-            if os.path.exists(src):
-                if idx == backups:
-                    os.remove(src)
-                else:
-                    os.replace(src, dst)
-        os.replace(path, f"{path}.1")
+        _build_audit_sink(path).rotate_if_needed()
     except Exception as exc:
         logger.error("Audit rotation failed: %s", exc)
 
 
 def _read_last_entry_hash(path: str) -> str:
-    # Best-effort bootstrap. Fall back to genesis if file is empty/unreadable.
-    if not os.path.exists(path):
-        return "GENESIS"
-    try:
-        with open(path, "rb") as f:
-            f.seek(0, os.SEEK_END)
-            size = f.tell()
-            if size <= 0:
-                return "GENESIS"
-            step = min(size, 8192)
-            f.seek(size - step)
-            data = f.read().decode("utf-8", errors="ignore")
-        lines = [line.strip() for line in data.splitlines() if line.strip()]
-        if not lines:
-            return "GENESIS"
-        last = json.loads(lines[-1])
-        last_hash = last.get("entry_hash")
-        if isinstance(last_hash, str) and last_hash:
-            return last_hash
-    except Exception:
-        pass
-    return "GENESIS"
+    return read_last_entry_hash_from_chain(path)
 
 
 _LAST_HASH: Optional[str] = None
@@ -182,29 +202,12 @@ _AUDIT_WRITE_LOCK = threading.Lock()
 
 def _write_audit_entry(entry: Dict[str, Any]) -> None:
     global _LAST_HASH
-    try:
-        os.makedirs(os.path.dirname(os.path.abspath(AUDIT_LOG_PATH)), exist_ok=True)
-    except Exception:
-        # Path may be relative to CWD with no parent folder.
-        pass
-
-    # CRITICAL: keep read->chain->append->state update atomic to avoid hash-chain forks.
+    sink = _build_audit_sink(AUDIT_LOG_PATH)
+    # CRITICAL: keep tail-resolution -> rotate -> append -> cache update atomic so
+    # restarts and file rotations cannot fork the retained audit chain.
     with _AUDIT_WRITE_LOCK:
-        _rotate_if_needed(AUDIT_LOG_PATH)
-        if _LAST_HASH is None:
-            _LAST_HASH = _read_last_entry_hash(AUDIT_LOG_PATH)
-
-        prev_hash = _LAST_HASH or "GENESIS"
-        event_hash = _chain_hash(prev_hash, entry)
-        wrapped = dict(entry)
-        wrapped["prev_hash"] = prev_hash
-        wrapped["entry_hash"] = event_hash
-
-        line = json.dumps(wrapped, sort_keys=True, ensure_ascii=True) + "\n"
         try:
-            with open(AUDIT_LOG_PATH, "a", encoding="utf-8") as f:
-                f.write(line)
-            _LAST_HASH = event_hash
+            _LAST_HASH = sink.append_entry(entry, last_hash=_LAST_HASH)
         except Exception as exc:
             logger.error("Failed to write audit entry: %s", exc)
 
@@ -395,3 +398,7 @@ def audit_llm_test(actor_ip: str, ok: bool, error: Optional[str] = None) -> None
             else {"actor_ip_tag": stable_redaction_tag(actor_ip, label="ip")}
         ),
     )
+
+
+def verify_audit_chain(path: Optional[str] = None) -> AuditVerificationResult:
+    return verify_audit_chain_impl(path or AUDIT_LOG_PATH, chain_hash=_chain_hash)

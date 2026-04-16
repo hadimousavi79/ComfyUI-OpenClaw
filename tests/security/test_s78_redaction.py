@@ -153,23 +153,31 @@ class TestS78BridgeWorkerRedaction(unittest.TestCase):
 class TestS78AuditRedaction(unittest.TestCase):
     def setUp(self):
         self.test_log = "test_s78_audit.log"
+        self.test_key = f"{self.test_log}.key"
         self.path_patcher = patch("services.audit.AUDIT_LOG_PATH", self.test_log)
         self.hash_patcher = patch("services.audit._LAST_HASH", None)
+        self.chain_key_patcher = patch("services.audit._AUDIT_CHAIN_KEY", None)
         self.tag_key_patcher = patch.object(
             redaction_module, "_REDACTION_TAG_KEY", b"s78-test-redaction-key"
         )
         self.path_patcher.start()
         self.hash_patcher.start()
+        self.chain_key_patcher.start()
         self.tag_key_patcher.start()
         if os.path.exists(self.test_log):
             os.remove(self.test_log)
+        if os.path.exists(self.test_key):
+            os.remove(self.test_key)
 
     def tearDown(self):
         self.path_patcher.stop()
         self.hash_patcher.stop()
+        self.chain_key_patcher.stop()
         self.tag_key_patcher.stop()
         if os.path.exists(self.test_log):
             os.remove(self.test_log)
+        if os.path.exists(self.test_key):
+            os.remove(self.test_key)
 
     def _read_entries(self):
         with open(self.test_log, "r", encoding="utf-8") as handle:

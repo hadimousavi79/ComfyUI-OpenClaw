@@ -7,7 +7,11 @@ import json
 import os
 from typing import Dict
 
-from .security_doctor_report import SecurityCheckResult, SecurityReport, SecuritySeverity
+from .security_doctor_report import (
+    SecurityCheckResult,
+    SecurityReport,
+    SecuritySeverity,
+)
 
 try:
     from ..config import PACK_VERSION
