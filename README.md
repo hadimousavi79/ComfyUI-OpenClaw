@@ -77,6 +77,17 @@ Deployment profiles and hardening references:
 
 <details>
 
+<summary><strong>Output contract, outbound egress handling, Security Doctor structure, and audit verification tooling aligned with the current runtime</strong></summary>
+
+- Kept `/history` + `/view` as the supported runtime output contract for current operator flows, and made asset-service-only refs stay explicit as a bounded fallback state instead of silently guessing a direct `/api/assets` fetch path.
+- Consolidated outbound safe HTTP execution behind one shared `safe_io` executor seam so local-provider checks, connector callbacks, and redirect handling now follow the same SSRF-safe validation, pinning, and redirect re-check rules.
+- Split Security Doctor internals into focused endpoint, runtime, connector, report, and remediation modules while keeping the operator-facing doctor API and remediation workflow unchanged.
+- Added retained audit-chain verification tooling, including a persisted `audit.log.key` sidecar when no environment key is provided, so operators can verify the current audit log plus retained rotations after restart or log rotation.
+
+</details>
+
+<details>
+
 <summary><strong>Provider URL parity and CI harness resilience tightened for local LLM defaults and Playwright bootstrap stability</strong></summary>
 
 - Fixed the built-in `Ollama (Local)` provider default so OpenClaw's OpenAI-compatible requests now target the correct `/v1` surface by default, and existing loopback-root overrides are normalized onto the same bounded path instead of failing on `/models` or `/chat/completions` at the daemon root.
@@ -738,6 +749,7 @@ Deployment profiles and hardening references:
 - [LLM Failover](#llm-failover)
 - [Advanced Security and Runtime Setup](#advanced-security-and-runtime-setup)
 - [State Directory & Logs](#state-directory--logs)
+- [Audit Chain Verification](#audit-chain-verification)
 - [Troubleshooting](#troubleshooting)
 - [Tests](#tests)
 - [Updating](#updating)
@@ -934,7 +946,7 @@ The OpenClaw sidebar includes these built-in tabs. Some tabs are capability-gate
 | Tab | What it does | Related docs |
 | --- | --- | --- |
 | `Settings` | Health/config/log visibility, provider/model setup, model connectivity checks, and optional localhost key storage. | [Quick Start](#quick-start-minimal), [LLM config](#llm-config-non-secret), [Troubleshooting](#troubleshooting) |
-| `Jobs` | Tracks prompt IDs, consumes deterministic event/task cursor metadata for polling, and shows output previews for recent jobs across classic history refs and asset-backed output refs through the same `/view` contract. | [Observability](#observability-read-only), [Remote Control (Connector)](#remote-control-connector) |
+| `Jobs` | Tracks prompt IDs, consumes deterministic event/task cursor metadata for polling, and shows output previews for recent jobs across classic history refs and asset-backed output refs through the same `/view` contract; refs that only expose asset-service identifiers stay explicit as an operator-visible fallback state instead of silently upgrading to `/api/assets`. | [Observability](#observability-read-only), [Remote Control (Connector)](#remote-control-connector) |
 | `Planner` | Uses assist endpoint to generate structured prompt plans (positive/negative/params). | [Configure an LLM key](#1-configure-an-llm-key-for-plannerrefinervision-helpers), [Nodes](#nodes) |
 | `Refiner` | Refines existing prompts with optional image context and issue/goal input. | [Configure an LLM key](#1-configure-an-llm-key-for-plannerrefinervision-helpers), [Nodes](#nodes) |
 | `Variants` | Local helper for generating batch variant parameter JSON (seed/range-style sweeps). | [Nodes](#nodes), [Operator UX Features](#operator-ux-features) |
@@ -1038,6 +1050,7 @@ Operational notes:
 - Event and managed-download polling now expose deterministic cursor metadata so reconnect/backfill behavior can stay incremental instead of falling back to full-list refreshes on every poll.
 - Preflight inventory is snapshot-first: clients should treat `snapshot_ts`, `scan_state`, `stale`, and `last_error` as part of the normal operator-diagnostics contract.
 - Config/assist/model-management paths inherit the unified config precedence contract and SSRF-safe outbound policy.
+- Output/history-facing consumers should keep using the bounded `/history` + `/view` contract for supported preview flows; refs that are only representable through upstream asset APIs are surfaced explicitly as `asset_api_required` instead of being auto-fetched.
 - Connector installation diagnostics expose redacted token references only, never raw token material.
 - Webhook and rate-limit error paths expose machine-readable diagnostics; client integrations should consume codes and structured fields instead of free-form text.
 
@@ -1144,10 +1157,32 @@ Override:
 Logs:
 
 - `openclaw.log` (legacy `moltbot.log` is still supported)
+- `audit.log` for append-only audit events, plus retained rotated audit segments when log retention is enabled
+- `audit.log.key` when OpenClaw generates and persists the local audit chain key instead of receiving one from environment/config
 - Optional startup truncation: set `OPENCLAW_LOG_TRUNCATE_ON_START=1` to clear the active log file once at process startup (useful to avoid stale-history noise in UI log views).
 - Optional structured JSON logs for selected core paths:
   - set `OPENCLAW_LOG_FORMAT=json` (or `OPENCLAW_STRUCTURED_LOGS=1`) before startup
   - default behavior remains plain text logs (no structured log emission unless opt-in)
+
+## Audit Chain Verification
+
+Operators can verify retained audit-log continuity with:
+
+```bash
+python scripts/verify_audit_chain.py
+```
+
+Machine-readable output:
+
+```bash
+python scripts/verify_audit_chain.py --json
+```
+
+Notes:
+
+- The verifier checks the current `audit.log` and any retained rotated audit segments in the state directory.
+- When OpenClaw is not given an audit chain key explicitly, it persists a local `audit.log.key` sidecar so retained-chain verification still works across restart and rotation.
+- A failed verification should be treated as an operator-facing integrity incident and investigated before assuming the retained audit trail is trustworthy.
 
 ## Troubleshooting
 
@@ -1159,6 +1194,8 @@ Quick jumps:
 
 - backend not loaded / route 404 startup failures
 - Operator Doctor usage
+- Jobs preview fallback for asset-api-only output refs
+- audit chain verification after restart or rotation
 - webhook auth not configured
 - loopback LLM SSRF validation errors
 - Remote Admin vs private-LAN LLM target behavior

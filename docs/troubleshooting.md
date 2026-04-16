@@ -44,6 +44,38 @@ Explorer / inventory note:
 - A response showing `scan_state=refreshing` or `stale=true` does not necessarily mean the inventory path is broken; it can mean the cached snapshot was returned quickly while a deeper model scan continues in the background.
 - Treat `last_error` as the primary signal that the background scan actually failed.
 
+## Jobs preview shows an explicit asset fallback state instead of an image preview
+
+Current OpenClaw builds keep `/history` + `/view` as the supported runtime preview contract for job results.
+
+If a result ref only exposes an upstream asset-service identifier and cannot be represented through `/view`, OpenClaw keeps that ref explicit instead of silently guessing a direct `/api/assets` fetch.
+
+What this means:
+
+- `asset_api_required` is a bounded compatibility state, not a generic parser failure.
+- Classic history refs and hash-backed refs that still map onto `/view` should continue to preview normally.
+- If an operator workflow starts depending on direct asset-service identifiers, treat that as a contract gap and review [`docs/r167_asset_api_adoption_decision.md`](r167_asset_api_adoption_decision.md) before widening the runtime dependency.
+
+## Verify audit-chain continuity after restart or rotation
+
+Use the retained-chain verifier:
+
+```bash
+python scripts/verify_audit_chain.py
+```
+
+JSON output:
+
+```bash
+python scripts/verify_audit_chain.py --json
+```
+
+Notes:
+
+- The verifier checks the current `audit.log` and any retained rotated audit segments in the state directory.
+- When no audit chain key is supplied from environment/config, OpenClaw persists `audit.log.key` so verification still works across restart and rotation.
+- Treat verification failure as an audit-integrity incident until proven otherwise.
+
 ## Webhooks return `403 auth_not_configured`
 
 Set webhook auth environment variables as described in the README quick-start section, then restart ComfyUI.

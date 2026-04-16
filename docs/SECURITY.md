@@ -235,7 +235,7 @@ python scripts/check_deployment_profile.py --profile public --strict-warnings
 OpenClaw validates custom LLM `base_url` settings to prevent Server-Side Request Forgery (SSRF).
 
 * **Default**: known providers and localhost-safe paths are allowed.
-* **Pinned connect contract**: on supported CPython versions (current baseline: 3.10+), `safe_io` dials resolved IPs directly for HTTP/HTTPS and keeps TLS `server_hostname` on the original host; the no-skip `tests.test_s70_ssrf_pinning_regression` lane is intended to fail loudly if stdlib connect behavior drifts.
+* **Pinned connect contract**: on supported CPython versions (current baseline: 3.10+), the consolidated `safe_io` outbound executor dials resolved IPs directly for HTTP/HTTPS and keeps TLS `server_hostname` on the original host; the no-skip `tests.test_s70_ssrf_pinning_regression` lane is intended to fail loudly if stdlib connect behavior drifts.
 * **Custom base URL**:
   - requires explicit opt-in:
 
@@ -254,6 +254,22 @@ OpenClaw validates custom LLM `base_url` settings to prevent Server-Side Request
   - the same override is enforced consistently for config validation, `/openclaw/llm/models`, and outbound provider requests.
   - wildcard values such as `OPENCLAW_LLM_ALLOWED_HOSTS="*"` are not supported.
   - avoid broad bypass flags in production (`OPENCLAW_ALLOW_ANY_PUBLIC_LLM_HOST`, `OPENCLAW_ALLOW_INSECURE_BASE_URL`).
+
+### 6.1 Audit Chain Verification
+
+OpenClaw keeps append-only audit evidence verifiable across restart and retained-log rotation.
+
+Recommended operator check:
+
+```bash
+python scripts/verify_audit_chain.py --json
+```
+
+Notes:
+
+- verification covers the active `audit.log` plus retained rotated segments in the state directory
+- when an audit chain key is not supplied externally, OpenClaw persists a local `audit.log.key` sidecar so the retained chain stays verifiable after restart
+- treat any verification failure as an integrity incident and investigate before trusting the retained audit trail
 
 ### 7. Rate Limiting
 
@@ -283,6 +299,7 @@ OpenClaw supports a "Sidecar Bridge" (F10) for safe interaction with external bo
 * [ ] **Public path deny rules**: block ComfyUI-native high-risk routes and `/api/*` equivalents unless explicitly required.
 * [ ] **Connector strict-posture allowlists**: if connector ingress is active in `public` or `hardened`, ensure platform allowlists are set before startup (`DP-PUBLIC-009` for public profile).
 * [ ] **Multi-tenant boundary (if enabled)**: enforce one canonical tenant header path through proxy/app, keep fallback toggles disabled unless a migration window is actively in progress.
+* [ ] **Audit integrity check**: run `python scripts/verify_audit_chain.py --json` after restart/rotation-sensitive maintenance and confirm retained audit logs still verify cleanly.
 * [ ] **1Password guardrails (if enabled)**: require command allowlist + vault/template validation; in multi-tenant mode, include `{tenant}` in item template.
 * [ ] **Startup gate preflight**: run `python scripts/check_deployment_profile.py --profile public --strict-warnings`.
 * [ ] **Runtime diagnostics**: review `GET /openclaw/security/doctor` before exposure.
