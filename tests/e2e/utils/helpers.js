@@ -24,6 +24,23 @@ function resolveUiTimeoutMs() {
   return 30_000;
 }
 
+function resolveHarnessReloadBudget() {
+  const raw = process.env.OPENCLAW_E2E_HARNESS_RELOADS;
+  if (raw) {
+    const parsed = Number.parseInt(raw, 10);
+    if (Number.isInteger(parsed) && parsed >= 0) {
+      return parsed;
+    }
+  }
+
+  return 1;
+}
+
+function isTransientModuleFetchFailure(error) {
+  const message = String(error?.message || error || '');
+  return message.includes('Failed to fetch dynamically imported module');
+}
+
 function normalizeApiPath(pathname) {
   if (typeof pathname !== 'string') return '';
   const stripped = pathname.startsWith('/api/') ? pathname.slice(4) : pathname;
@@ -573,20 +590,41 @@ export async function mockRemoteAdminBaseline(
 
 export async function waitForOpenClawReady(page) {
   const timeoutMs = resolveUiTimeoutMs();
-  await page.waitForFunction(
-    () => window.__openclawTestReady === true || window.__openclawTestError,
-    null,
-    { timeout: timeoutMs }
-  );
+  const maxHarnessReloads = resolveHarnessReloadBudget();
 
-  const error = await page.evaluate(() => window.__openclawTestError);
-  if (error) {
+  for (let reloadAttempt = 0; reloadAttempt <= maxHarnessReloads; reloadAttempt += 1) {
+    await page.waitForFunction(
+      () => window.__openclawTestReady === true || window.__openclawTestError,
+      null,
+      { timeout: timeoutMs }
+    );
+
+    const [error, loadAttempts] = await Promise.all([
+      page.evaluate(() => window.__openclawTestError),
+      page.evaluate(() => window.__openclawTestLoadAttempts || 0),
+    ]);
+
+    if (!error) {
+      // Basic sanity: header + tab bar exists
+      await expect(page.locator('.openclaw-header')).toBeVisible();
+      await expect(page.locator('.openclaw-tabs')).toBeVisible();
+      return;
+    }
+
+    // IMPORTANT: only recover via full-page reload after the in-page harness
+    // has already exhausted its own transient-fetch retry budget. This keeps
+    // CI-only fetch flakes recoverable without masking real module/runtime bugs.
+    if (
+      isTransientModuleFetchFailure(error) &&
+      loadAttempts >= 4 &&
+      reloadAttempt < maxHarnessReloads
+    ) {
+      await page.reload({ waitUntil: 'load' });
+      continue;
+    }
+
     throw new Error(`OpenClaw test harness failed to load: ${error?.message || error}`);
   }
-
-  // Basic sanity: header + tab bar exists
-  await expect(page.locator('.openclaw-header')).toBeVisible();
-  await expect(page.locator('.openclaw-tabs')).toBeVisible();
 }
 
 export async function clickTab(page, title) {
