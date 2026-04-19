@@ -14,7 +14,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class TestR176ImportSafeConfig(unittest.TestCase):
-    def _run_python(self, script: str, *, env: dict[str, str]) -> subprocess.CompletedProcess:
+    def _run_python(
+        self, script: str, *, env: dict[str, str]
+    ) -> subprocess.CompletedProcess:
         return subprocess.run(
             [sys.executable, "-c", script],
             capture_output=True,
