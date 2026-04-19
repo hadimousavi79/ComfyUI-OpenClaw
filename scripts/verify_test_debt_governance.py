@@ -60,7 +60,9 @@ def _validate_skip_policy(repo_root: Path, path: Path) -> List[str]:
     if not isinstance(modules, list) or any(
         not isinstance(item, str) or not item.strip() for item in modules
     ):
-        failures.append("skip policy: no_skip_modules must be a list of non-empty strings")
+        failures.append(
+            "skip policy: no_skip_modules must be a list of non-empty strings"
+        )
         return failures
 
     seen = set()
@@ -90,7 +92,9 @@ def _validate_skip_policy(repo_root: Path, path: Path) -> List[str]:
         return failures
 
     metadata_keys = {str(key).strip() for key in metadata.keys()}
-    missing_metadata = [module for module in normalized_modules if module not in metadata_keys]
+    missing_metadata = [
+        module for module in normalized_modules if module not in metadata_keys
+    ]
     extra_metadata = sorted(
         key for key in metadata_keys if key and key not in set(normalized_modules)
     )
@@ -153,7 +157,10 @@ def _validate_mutation_allowlist(repo_root: Path, path: Path) -> List[str]:
     if duplicates:
         failures.append(
             "mutation allowlist: duplicate (file, mutation_index) entries: "
-            + ", ".join(f"{file}@{mutation_index}" for file, mutation_index in sorted(duplicates))
+            + ", ".join(
+                f"{file}@{mutation_index}"
+                for file, mutation_index in sorted(duplicates)
+            )
         )
     return failures
 
@@ -171,10 +178,14 @@ def verify_test_debt_governance(
         try:
             failures.extend(_validate_skip_policy(repo_root, skip_policy_path))
         except Exception as exc:
-            failures.append(f"skip policy: failed to validate {skip_policy_path}: {exc}")
+            failures.append(
+                f"skip policy: failed to validate {skip_policy_path}: {exc}"
+            )
 
     if not mutation_allowlist_path.is_file():
-        failures.append(f"missing mutation survivor allowlist: {mutation_allowlist_path}")
+        failures.append(
+            f"missing mutation survivor allowlist: {mutation_allowlist_path}"
+        )
     else:
         try:
             failures.extend(

@@ -3,7 +3,6 @@ import textwrap
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
 
-
 DEFAULT_REQUIRED_HOTSPOT_FAMILIES = [
     "safe_io",
     "security_boundary",
