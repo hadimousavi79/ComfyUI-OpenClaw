@@ -18,7 +18,9 @@ class TestR182EffectiveConfigHotspot(unittest.TestCase):
         )
 
     @patch("services.effective_config.get_api_key_for_provider")
-    @patch("services.effective_config.get_effective_llm_provider", return_value="openai")
+    @patch(
+        "services.effective_config.get_effective_llm_provider", return_value="openai"
+    )
     def test_effective_api_key_uses_resolved_provider_and_tenant(
         self,
         mock_provider,
