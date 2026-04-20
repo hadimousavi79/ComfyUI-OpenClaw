@@ -183,6 +183,16 @@ if (-not $hasDefusedXml) {
   Invoke-Checked "pip install defusedxml" { & $venvPython -m pip install defusedxml }
 }
 
+$hasCoverage = $true
+& $venvPython -c "import coverage" | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  $hasCoverage = $false
+}
+if (-not $hasCoverage) {
+  Write-Host "[tests] Installing coverage into project venv (R184 backend coverage gate) ..."
+  Invoke-Checked "pip install coverage" { & $venvPython -m pip install coverage }
+}
+
 # Ensure Node >= 18
 $nodeMajor = [int]((& node -p "process.versions.node.split('.')[0]").Trim())
 if ($nodeMajor -lt 18) {
@@ -279,7 +289,12 @@ Invoke-Checked "test debt governance check" {
 Write-Host "[tests] 5/10 backend unit tests"
 $env:MOLTBOT_STATE_DIR = "$root\moltbot_state\_local_unit"
 Invoke-Checked "backend unit tests" {
-  & $venvPython scripts\run_unittests.py --start-dir tests --pattern "test_*.py" --enforce-skip-policy tests\skip_policy.json
+  & $venvPython scripts\run_backend_coverage.py --start-dir tests --pattern "test_*.py" --enforce-skip-policy tests\skip_policy.json --coverage-json .tmp\coverage\backend_unit_coverage.json
+}
+
+Write-Host "[tests] 5.1/10 backend coverage hotspot report"
+Invoke-Checked "backend coverage hotspot report" {
+  & $venvPython scripts\report_coverage_governance.py --coverage-json .tmp\coverage\backend_unit_coverage.json
 }
 
 if ($env:OPENCLAW_IMPL_RECORD_PATH) {

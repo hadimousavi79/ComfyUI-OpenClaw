@@ -79,7 +79,7 @@ Deployment profiles and hardening references:
 
 <summary><strong>Verification governance, config bootstrap hygiene, and connector env hardening aligned with the current runtime</strong></summary>
 
-- Added staged coverage-ratchet governance plus hotspot-family coverage reporting, so the current floor and future promotion targets are reviewed from one governed source instead of ad hoc `fail_under` edits.
+- Promoted the staged coverage-ratchet baseline to the enforced `45%` floor, added retained review-cycle evidence for hotspot families, and wired backend coverage collection through one shared local/CI helper instead of ad hoc `fail_under` edits.
 - Added fail-closed test-debt governance for no-skip modules and mutation-survivor allowlist entries, with explicit `reason` and `review_after` metadata now enforced by the standard full-test flow.
 - Hardened pack metadata/version fallback parsing and made config/bootstrap imports side-effect-safe, so pack version fallback stays deterministic and importing config helpers no longer creates the state directory or log file before first real use.
 - Added bounded connector numeric env parsing for delivery, media, timeout, rate-limit, command-length, OAuth TTL, and bind-port settings, so malformed values degrade to documented defaults or clamps with warnings instead of crashing startup.
@@ -197,7 +197,7 @@ Deployment profiles and hardening references:
 <summary><strong>Exception-fidelity cleanup and verification-governance baseline completed</strong></summary>
 
 - Preserved original traceback origins on the remaining planner/refiner/vision/config failure paths and aligned request-time default `LLMClient` refresh so runtime config hot-reload no longer mutates long-lived service state just to get a fresh client.
-- Added explicit coverage governance in `pyproject.toml`, including minimum `fail_under`, visible missing-line reporting, and skip-covered output, so baseline quality drift is no longer implicit.
+- Added explicit coverage governance in `pyproject.toml`, including the active `45%` `fail_under`, visible missing-line reporting, and skip-covered output, so baseline quality drift is no longer implicit.
 - Added a stdlib-only governance verifier that fails closed when coverage config, adversarial mutation thresholds, SOP guidance, or mutation-survivor allowlist shape drift away from the enforced baseline.
 - Wired the governance verifier into Linux/Windows full-test flows and the repo pre-push gate, keeping local CI-parity checks aligned with the enforced verification contract.
 - Re-validated the full implementation on WSL with the full SOP gate: detect-secrets, pre-commit, governance verification, backend full suites, adaptive adversarial gate, and Playwright E2E.
