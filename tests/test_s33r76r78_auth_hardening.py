@@ -76,6 +76,7 @@ AUTH_CLASS_BY_ROUTE = {
     ("POST", "/tools/{name}/run"): "admin",
     ("POST", "/pnginfo"): "admin",
     ("GET", "/connector/installations"): "admin",
+    ("GET", "/connector/extraction-contract"): "admin",
     ("GET", "/connector/installations/resolve"): "admin",
     ("GET", "/connector/installations/audit"): "admin",
     ("GET", "/connector/installations/{installation_id}"): "admin",

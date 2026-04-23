@@ -102,13 +102,15 @@ class TestR151RouteRegistrars(unittest.TestCase):
             "/openclaw",
             {
                 "connector_installations_list_handler": sentinel.list_handler,
+                "connector_extraction_contract_handler": sentinel.contract_handler,
                 "connector_installation_resolve_handler": sentinel.resolve_handler,
                 "connector_installation_audit_handler": sentinel.audit_handler,
                 "connector_installation_get_handler": sentinel.get_handler,
             },
         )
         keys = {(spec.method, spec.path) for spec in specs}
-        self.assertEqual(4, len(specs))
+        self.assertEqual(5, len(specs))
+        self.assertIn(("GET", "/openclaw/connector/extraction-contract"), keys)
         self.assertIn(("GET", "/openclaw/connector/installations/audit"), keys)
         self.assertIn(
             ("GET", "/openclaw/connector/installations/{installation_id}"), keys

@@ -25,6 +25,9 @@ except ImportError:  # pragma: no cover
 
 if __package__ and "." in __package__:
     from ..services.access_control import require_admin_token, resolve_token_info
+    from ..services.connector_extraction_contract import (
+        get_connector_extraction_contract,
+    )
     from ..services.connector_installation_registry import (
         get_connector_installation_registry,
     )
@@ -33,6 +36,9 @@ if __package__ and "." in __package__:
 else:  # pragma: no cover
     from services.access_control import require_admin_token  # type: ignore
     from services.access_control import resolve_token_info  # type: ignore
+    from services.connector_extraction_contract import (  # type: ignore
+        get_connector_extraction_contract,
+    )
     from services.connector_installation_registry import (  # type: ignore
         get_connector_installation_registry,
     )
@@ -241,3 +247,22 @@ async def connector_installation_audit_handler(request):
             {"ok": False, "error": exc.code, "message": str(exc)},
             status=403,
         )
+
+
+@endpoint_metadata(
+    auth=AuthTier.ADMIN,
+    risk=RiskTier.LOW,
+    summary="Connector extraction contract",
+    description="Returns the machine-readable connector extraction feasibility contract.",
+    audit="connector.extraction_contract.get",
+    plane=RoutePlane.ADMIN,
+)
+async def connector_extraction_contract_handler(request):
+    if (guard := _require_admin(request)) is not None:
+        return guard
+    return web.json_response(
+        {
+            "ok": True,
+            "contract": get_connector_extraction_contract(),
+        }
+    )

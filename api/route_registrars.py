@@ -228,6 +228,11 @@ def build_connector_installation_route_specs(
         ),
         RouteSpec(
             "GET",
+            f"{prefix}/connector/extraction-contract",
+            handlers["connector_extraction_contract_handler"],
+        ),
+        RouteSpec(
+            "GET",
             f"{prefix}/connector/installations/resolve",
             handlers["connector_installation_resolve_handler"],
         ),

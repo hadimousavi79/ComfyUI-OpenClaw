@@ -113,6 +113,26 @@ class TestAPIConnectorContracts(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(resp.status, 403)
 
+    async def test_extraction_contract_handler_success(self):
+        request = AsyncMock()
+        request.query = {}
+
+        with (
+            patch("api.connector_contracts.check_rate_limit", return_value=True),
+            patch(
+                "api.connector_contracts.require_admin_token", return_value=(True, None)
+            ),
+        ):
+            resp = await mod.connector_extraction_contract_handler(request)
+
+        self.assertEqual(resp.status, 200)
+        body = json.loads(resp.body)
+        self.assertTrue(body["ok"])
+        self.assertEqual(
+            body["contract"]["decision"]["id"],
+            "stay_in_repo_attached_subsystem",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

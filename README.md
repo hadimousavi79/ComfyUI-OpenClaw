@@ -1084,6 +1084,7 @@ Primary references:
 - [Security checklist](docs/security_checklist.md)
 - [Config surface ADR](docs/adr/ADR-0001-config-surface-unification.md)
 - [Product boundary ADR](docs/adr/ADR-0002-product-boundary-and-packaging-contract.md)
+- [Connector extraction ADR](docs/adr/ADR-0003-connector-extraction-feasibility-and-seams.md)
 - [Config and secrets contract](docs/release/config_secrets_contract.md)
 - [Advanced registry and transforms](docs/advanced_registry_and_transforms.md)
 - [Connector guide](docs/connector.md)

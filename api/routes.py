@@ -67,6 +67,7 @@ remote_admin_page_handler = None  # type: ignore  # F61
 security_doctor_handler = None  # type: ignore  # S30
 connector_installations_list_handler = connector_installation_get_handler = None  # type: ignore
 connector_installation_resolve_handler = connector_installation_audit_handler = None  # type: ignore
+connector_extraction_contract_handler = None  # type: ignore
 templates_list_handler = None  # type: ignore
 rewrite_recipes_list_handler = rewrite_recipe_get_handler = None  # type: ignore
 rewrite_recipe_create_handler = rewrite_recipe_update_handler = None  # type: ignore
@@ -96,6 +97,7 @@ if web is not None:
         connector_installation_get_handler,
         connector_installation_resolve_handler,
         connector_installation_audit_handler,
+        connector_extraction_contract_handler,
     ) = import_attrs_dual(
         __package__,
         "..api.connector_contracts",
@@ -105,6 +107,7 @@ if web is not None:
             "connector_installation_get_handler",
             "connector_installation_resolve_handler",
             "connector_installation_audit_handler",
+            "connector_extraction_contract_handler",
         ),
     )
     (
@@ -919,6 +922,7 @@ def register_routes(server) -> None:
     if connector_installations_list_handler:
         connector_installation_handlers = {
             "connector_installations_list_handler": connector_installations_list_handler,
+            "connector_extraction_contract_handler": connector_extraction_contract_handler,
             "connector_installation_resolve_handler": connector_installation_resolve_handler,
             "connector_installation_audit_handler": connector_installation_audit_handler,
             "connector_installation_get_handler": connector_installation_get_handler,

@@ -4,6 +4,8 @@ The **OpenClaw Connector** (`connector`) is a standalone process that allows you
 
 Per the product boundary contract, the connector is an **optional attached subsystem**. The primary published artifact of this repo remains the **ComfyUI custom node pack**, and the connector augments that package rather than replacing it.
 
+Current extraction decision: keep the connector **in-repo** as an optional attached subsystem for now. OpenClaw does **not** currently treat a standalone connector package/repo as a supported distribution; see [ADR-0003](adr/ADR-0003-connector-extraction-feasibility-and-seams.md).
+
 ## How It Works
 
 The connector runs alongside ComfyUI on your machine.
