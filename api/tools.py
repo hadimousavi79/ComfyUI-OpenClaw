@@ -8,33 +8,47 @@ from __future__ import annotations
 import json
 import logging
 
-try:
-    from ..services.access_control import require_admin_token, resolve_token_info
-    from ..services.aiohttp_compat import import_aiohttp_web
-    from ..services.audit import emit_audit_event
-    from ..services.tool_runner import get_tool_runner, is_tools_enabled
-except ImportError:
-    from services.access_control import require_admin_token  # type: ignore
-    from services.access_control import resolve_token_info  # type: ignore
-    from services.aiohttp_compat import import_aiohttp_web  # type: ignore
-    from services.audit import emit_audit_event  # type: ignore
-    from services.tool_runner import get_tool_runner, is_tools_enabled
-
-# R98: Endpoint Metadata
 if __package__ and "." in __package__:
-    from ..services.endpoint_manifest import (
-        AuthTier,
-        RiskTier,
-        RoutePlane,
-        endpoint_metadata,
-    )
+    from ..services.import_fallback import import_attrs_dual
 else:
-    from services.endpoint_manifest import (
-        AuthTier,
-        RiskTier,
-        RoutePlane,
-        endpoint_metadata,
-    )
+    from services.import_fallback import import_attrs_dual  # type: ignore
+
+(require_admin_token, resolve_token_info) = import_attrs_dual(
+    __package__,
+    "..services.access_control",
+    "services.access_control",
+    ("require_admin_token", "resolve_token_info"),
+)
+(import_aiohttp_web,) = import_attrs_dual(
+    __package__,
+    "..services.aiohttp_compat",
+    "services.aiohttp_compat",
+    ("import_aiohttp_web",),
+)
+(emit_audit_event,) = import_attrs_dual(
+    __package__,
+    "..services.audit",
+    "services.audit",
+    ("emit_audit_event",),
+)
+(get_tool_runner, is_tools_enabled) = import_attrs_dual(
+    __package__,
+    "..services.tool_runner",
+    "services.tool_runner",
+    ("get_tool_runner", "is_tools_enabled"),
+)
+(AuthTier, RiskTier, RoutePlane, endpoint_metadata) = import_attrs_dual(
+    __package__,
+    "..services.endpoint_manifest",
+    "services.endpoint_manifest",
+    ("AuthTier", "RiskTier", "RoutePlane", "endpoint_metadata"),
+)
+(check_surface,) = import_attrs_dual(
+    __package__,
+    "..services.surface_guard",
+    "services.surface_guard",
+    ("check_surface",),
+)
 
 logger = logging.getLogger("ComfyUI-OpenClaw.api.tools")
 web = import_aiohttp_web()
@@ -87,11 +101,6 @@ async def tools_run_handler(request: web.Request) -> web.Response:
     Requires: Admin Token.
     """
     # S62: Block tool execution in public+split mode
-    try:
-        # CRITICAL: package-relative import must stay first in ComfyUI runtime.
-        from ..services.surface_guard import check_surface
-    except ImportError:
-        from services.surface_guard import check_surface  # type: ignore
     blocked = check_surface("tool_execution", request)
     if blocked:
         return blocked

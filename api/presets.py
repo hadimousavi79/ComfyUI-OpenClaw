@@ -8,29 +8,41 @@ import os
 import time
 from typing import Optional
 
-try:
-    from ..services.access_control import require_admin_token, resolve_token_info
-    from ..services.aiohttp_compat import import_aiohttp_web
-    from ..services.endpoint_manifest import (
-        AuthTier,
-        RiskTier,
-        RoutePlane,
-        endpoint_metadata,
-    )
-    from ..services.presets import Preset, preset_store
-    from ..services.tenant_context import TenantBoundaryError, request_tenant_scope
-except ImportError:
-    # Fallback for ComfyUI's non-package loader or ad-hoc imports.
-    from services.access_control import require_admin_token, resolve_token_info
-    from services.aiohttp_compat import import_aiohttp_web
-    from services.endpoint_manifest import (
-        AuthTier,
-        RiskTier,
-        RoutePlane,
-        endpoint_metadata,
-    )
-    from services.presets import Preset, preset_store
-    from services.tenant_context import TenantBoundaryError, request_tenant_scope
+if __package__ and "." in __package__:
+    from ..services.import_fallback import import_attrs_dual
+else:
+    from services.import_fallback import import_attrs_dual  # type: ignore
+
+(require_admin_token, resolve_token_info) = import_attrs_dual(
+    __package__,
+    "..services.access_control",
+    "services.access_control",
+    ("require_admin_token", "resolve_token_info"),
+)
+(import_aiohttp_web,) = import_attrs_dual(
+    __package__,
+    "..services.aiohttp_compat",
+    "services.aiohttp_compat",
+    ("import_aiohttp_web",),
+)
+(AuthTier, RiskTier, RoutePlane, endpoint_metadata) = import_attrs_dual(
+    __package__,
+    "..services.endpoint_manifest",
+    "services.endpoint_manifest",
+    ("AuthTier", "RiskTier", "RoutePlane", "endpoint_metadata"),
+)
+(Preset, preset_store) = import_attrs_dual(
+    __package__,
+    "..services.presets",
+    "services.presets",
+    ("Preset", "preset_store"),
+)
+(TenantBoundaryError, request_tenant_scope) = import_attrs_dual(
+    __package__,
+    "..services.tenant_context",
+    "services.tenant_context",
+    ("TenantBoundaryError", "request_tenant_scope"),
+)
 
 logger = logging.getLogger("ComfyUI-OpenClaw.api.presets")
 web = import_aiohttp_web()

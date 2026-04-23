@@ -15,10 +15,17 @@ from __future__ import annotations
 import logging
 import os
 
-try:
-    from .aiohttp_compat import import_aiohttp_web
-except ImportError:
-    from aiohttp_compat import import_aiohttp_web  # type: ignore
+if __package__ and "." in __package__:
+    from ..services.import_fallback import import_attrs_dual
+else:
+    from services.import_fallback import import_attrs_dual  # type: ignore
+
+(import_aiohttp_web,) = import_attrs_dual(
+    __package__,
+    ".aiohttp_compat",
+    "services.aiohttp_compat",
+    ("import_aiohttp_web",),
+)
 
 web = import_aiohttp_web()
 
@@ -30,10 +37,12 @@ def _is_fail_closed_profile() -> bool:
     profile = os.environ.get("OPENCLAW_DEPLOYMENT_PROFILE", "local").lower()
     if profile == "public":
         return True
-    try:
-        from .runtime_profile import is_hardened_mode
-    except ImportError:
-        from runtime_profile import is_hardened_mode  # type: ignore
+    (is_hardened_mode,) = import_attrs_dual(
+        __package__,
+        ".runtime_profile",
+        "services.runtime_profile",
+        ("is_hardened_mode",),
+    )
     return bool(is_hardened_mode())
 
 

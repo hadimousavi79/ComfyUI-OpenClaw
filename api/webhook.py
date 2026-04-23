@@ -14,43 +14,68 @@ from __future__ import annotations
 import json
 import logging
 
-try:
-    from .errors import APIError, ErrorCode, create_error_response
-except ImportError:
-    # Build-time / Test fallback
-    from api.errors import APIError, ErrorCode, create_error_response
+if __package__ and "." in __package__:
+    from ..services.import_fallback import import_attrs_dual
+else:
+    from services.import_fallback import import_attrs_dual  # type: ignore
 
-try:
-    from ..models.schemas import MAX_BODY_SIZE, WebhookJobRequest
-    from ..services.aiohttp_compat import import_aiohttp_web
-    from ..services.metrics import metrics
-    from ..services.rate_limit import build_rate_limit_response, check_rate_limit
-    from ..services.trace import get_effective_trace_id
-    from ..services.webhook_auth import get_auth_summary, require_auth
-except ImportError:
-    from models.schemas import MAX_BODY_SIZE, WebhookJobRequest
-    from services.aiohttp_compat import import_aiohttp_web  # type: ignore
-    from services.metrics import metrics
-    from services.rate_limit import build_rate_limit_response, check_rate_limit
-    from services.trace import get_effective_trace_id
-    from services.webhook_auth import get_auth_summary, require_auth
-
-try:
-    from ..services.diagnostics_flags import diagnostics
-    from ..services.endpoint_manifest import (
-        AuthTier,
-        RiskTier,
-        RoutePlane,
-        endpoint_metadata,
-    )
-except ImportError:
-    from services.diagnostics_flags import diagnostics
-    from services.endpoint_manifest import (
-        AuthTier,
-        RiskTier,
-        RoutePlane,
-        endpoint_metadata,
-    )
+(APIError, ErrorCode, create_error_response) = import_attrs_dual(
+    __package__,
+    ".errors",
+    "api.errors",
+    ("APIError", "ErrorCode", "create_error_response"),
+)
+(
+    MAX_BODY_SIZE,
+    WebhookJobRequest,
+) = import_attrs_dual(
+    __package__,
+    "..models.schemas",
+    "models.schemas",
+    ("MAX_BODY_SIZE", "WebhookJobRequest"),
+)
+(import_aiohttp_web,) = import_attrs_dual(
+    __package__,
+    "..services.aiohttp_compat",
+    "services.aiohttp_compat",
+    ("import_aiohttp_web",),
+)
+(metrics,) = import_attrs_dual(
+    __package__,
+    "..services.metrics",
+    "services.metrics",
+    ("metrics",),
+)
+(build_rate_limit_response, check_rate_limit) = import_attrs_dual(
+    __package__,
+    "..services.rate_limit",
+    "services.rate_limit",
+    ("build_rate_limit_response", "check_rate_limit"),
+)
+(get_effective_trace_id,) = import_attrs_dual(
+    __package__,
+    "..services.trace",
+    "services.trace",
+    ("get_effective_trace_id",),
+)
+(get_auth_summary, require_auth) = import_attrs_dual(
+    __package__,
+    "..services.webhook_auth",
+    "services.webhook_auth",
+    ("get_auth_summary", "require_auth"),
+)
+(diagnostics,) = import_attrs_dual(
+    __package__,
+    "..services.diagnostics_flags",
+    "services.diagnostics_flags",
+    ("diagnostics",),
+)
+(AuthTier, RiskTier, RoutePlane, endpoint_metadata) = import_attrs_dual(
+    __package__,
+    "..services.endpoint_manifest",
+    "services.endpoint_manifest",
+    ("AuthTier", "RiskTier", "RoutePlane", "endpoint_metadata"),
+)
 
 # R46: Scoped logger for safe-by-default redaction
 logger = diagnostics.get_logger("ComfyUI-OpenClaw.api.webhook", "webhook")
