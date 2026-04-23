@@ -28,6 +28,22 @@ Notes:
 - If your pack folder name is not `comfyui-openclaw`, the smoke script may need `OPENCLAW_PACK_IMPORT_NAME=your-folder-name`.
 - If imports fail with a `services.*` module error, check for name collisions with other custom nodes and prefer package-relative imports.
 
+## Imported workflow shows missing OpenClaw nodes
+
+Current builds expose node portability metadata so "missing custom node" can be diagnosed separately from a generic import failure.
+
+What to check:
+
+1. Open the Explorer / inventory diagnostics view or inspect `/openclaw/preflight/inventory`.
+2. Confirm whether the workflow references `openclaw:*` nodes that are not present on the current host.
+3. Look for portability/replacement guidance rather than renaming nodes blindly.
+
+Notes:
+
+- Compatibility class names such as `Moltbot*` still exist for older workflows, but the canonical portability contract is anchored on `openclaw:*` node identities.
+- Current diagnostics may include deterministic replacement hints when an unavailable OpenClaw node can degrade to a more portable workflow pattern.
+- If no portability guidance is present and the pack itself is loaded correctly, treat that as a real contract gap rather than assuming the workflow can be repaired by arbitrary JSON edits.
+
 ## Operator Doctor
 
 Run the built-in diagnostic tool to verify environment readiness (libraries, permissions, contract files):

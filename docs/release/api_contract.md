@@ -1,8 +1,8 @@
 # OpenClaw API Contract (v1)
 
 > **Status**: normative
-> **Version**: 1.0.6
-> **Date**: 2026-03-27
+> **Version**: 1.0.7
+> **Date**: 2026-04-24
 
 This document defines the public API contract for OpenClaw. It serves as the authoritative baseline for client compatibility and breaking change policies.
 
@@ -104,11 +104,13 @@ Assist payload redaction contract:
 | `GET` | `/connector/installations/{installation_id}` | `/moltbot/connector/installations/{installation_id}` | Admin | Get one redacted connector installation record. |
 | `GET` | `/connector/installations/resolve` | `/moltbot/connector/installations/resolve` | Admin | Run fail-closed workspace resolution diagnostics (`platform`, `workspace_id`). |
 | `GET` | `/connector/installations/audit` | `/moltbot/connector/installations/audit` | Admin | List installation lifecycle audit evidence (redacted). |
+| `GET` | `/connector/extraction-contract` | `/moltbot/connector/extraction-contract` | Admin | Get the machine-readable connector extraction recommendation, seam families, and current blockers. |
 
 Connector diagnostics contract notes:
 - installation records may expose operator-safe health metadata under `installation.metadata.health` (for example `ok`, `invalid_token`, `revoked`, `degraded`) without exposing token material
 - `/connector/installations` diagnostics may include aggregate `health_counts` in addition to lifecycle `status_counts`
 - `/connector/installations/resolve` may expose a stable `health_code` alongside the legacy `reject_reason` so clients can distinguish `workspace_unbound` vs token-health failures without parsing status text
+- `/connector/extraction-contract` is structural packaging metadata only; clients MUST NOT treat it as a live installation-health or token-status feed
 
 ### 1.3C Model Management & Installations
 

@@ -40,6 +40,11 @@ Admin diagnostics APIs:
 - `GET /openclaw/connector/installations/{installation_id}`
 - `GET /openclaw/connector/installations/resolve?platform=<platform>&workspace_id=<workspace_id>`
 - `GET /openclaw/connector/installations/audit`
+- `GET /openclaw/connector/extraction-contract`
+
+Extraction diagnostics note:
+
+- `/openclaw/connector/extraction-contract` is an admin-only structural metadata route for maintainers and operators. It returns the current packaging recommendation, candidate extraction options, seam families, and blockers, but it does **not** expose live token or installation-state details beyond the existing diagnostics routes above.
 
 Slack multi-workspace notes:
 
@@ -686,6 +691,10 @@ Notes:
 - **Slack OAuth callback shows only a generic install failure**:
   - This is expected on current builds; callback responses intentionally suppress raw exception text.
   - Fix: inspect connector logs plus `GET /openclaw/connector/installations` / `/resolve` diagnostics to find the redacted root cause.
+
+- **I need to know whether the connector is supported as a separate package/repo yet**:
+  - Current builds intentionally keep the connector in-repo as an optional attached subsystem.
+  - Fix: review `GET /openclaw/connector/extraction-contract` or [ADR-0003](adr/ADR-0003-connector-extraction-feasibility-and-seams.md) for the current no-split recommendation and the seam blockers that still need to be versioned first.
 
 - **Feishu callback buttons fail with signature or stale-action errors**:
   - Callback route is not using the same bound app secret, request arrived too late, or the button payload was replayed.
