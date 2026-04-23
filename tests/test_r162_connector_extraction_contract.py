@@ -1,5 +1,5 @@
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 from services.connector_extraction_contract import get_connector_extraction_contract
 
@@ -14,9 +14,7 @@ class TestR162ConnectorExtractionContract(unittest.TestCase):
     def test_recommendation_and_options_are_stable(self):
         contract = get_connector_extraction_contract()
 
-        self.assertEqual(
-            contract["decision"]["id"], "stay_in_repo_attached_subsystem"
-        )
+        self.assertEqual(contract["decision"]["id"], "stay_in_repo_attached_subsystem")
         self.assertEqual(contract["decision"]["go_no_go"], "no_go_for_split_now")
         self.assertEqual(
             contract["decision"]["future_candidate"],
