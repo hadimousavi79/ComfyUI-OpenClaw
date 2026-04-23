@@ -13,6 +13,13 @@ ComfyUI-OpenClaw is a **security-first orchestration layer** for ComfyUI that co
 - **Now supports 8 major messaging platforms, including Discord, Telegram, WhatsApp, LINE, WeChat, KakaoTalk, Slack, and Feishu/Lark.**
 - **And more exciting features being added continuously**
 
+Supported product boundary:
+
+- **Primary artifact**: ComfyUI custom node pack
+- **First-class runtime identity**: embedded operator platform
+- **Optional attached subsystem**: connector-capable control surface via the sidecar runtime
+- **Decision record**: [ADR-0002 Product Boundary And Packaging Contract](docs/adr/ADR-0002-product-boundary-and-packaging-contract.md)
+
 ---
 <br>
 
@@ -1076,6 +1083,7 @@ Primary references:
 - [Security deployment guide](docs/security_deployment_guide.md)
 - [Security checklist](docs/security_checklist.md)
 - [Config surface ADR](docs/adr/ADR-0001-config-surface-unification.md)
+- [Product boundary ADR](docs/adr/ADR-0002-product-boundary-and-packaging-contract.md)
 - [Config and secrets contract](docs/release/config_secrets_contract.md)
 - [Advanced registry and transforms](docs/advanced_registry_and_transforms.md)
 - [Connector guide](docs/connector.md)

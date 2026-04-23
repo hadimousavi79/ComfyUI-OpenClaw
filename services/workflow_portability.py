@@ -73,9 +73,8 @@ def analyze_workflow_portability(workflow: Dict[str, Any]) -> Dict[str, Any]:
 
     total_nodes = len(entries)
     portable_mode_required = total_nodes > 0
-    portable_mode_supported = (
-        portable_mode_required
-        and all(entry["portable_mode"] != "unsupported" for entry in entries)
+    portable_mode_supported = portable_mode_required and all(
+        entry["portable_mode"] != "unsupported" for entry in entries
     )
 
     return {
@@ -116,4 +115,3 @@ def _dedupe_preserve_order(items: Iterable[str]) -> list[str]:
         seen.add(item)
         result.append(item)
     return result
-

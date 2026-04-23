@@ -2,6 +2,8 @@
 
 The **OpenClaw Connector** (`connector`) is a standalone process that allows you to control your local ComfyUI instance remotely via chat platforms like **Telegram**, **Discord**, **LINE**, **WhatsApp**, **WeChat Official Account**, **KakaoTalk (Kakao i Open Builder)**, **Slack**, and **Feishu/Lark**.
 
+Per the product boundary contract, the connector is an **optional attached subsystem**. The primary published artifact of this repo remains the **ComfyUI custom node pack**, and the connector augments that package rather than replacing it.
+
 ## How It Works
 
 The connector runs alongside ComfyUI on your machine.

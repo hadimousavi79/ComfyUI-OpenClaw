@@ -95,4 +95,3 @@ def get_node_portability_mappings() -> Dict[str, Dict[str, Any]]:
 
 
 NODE_PORTABILITY_MAPPINGS = get_node_portability_mappings()
-

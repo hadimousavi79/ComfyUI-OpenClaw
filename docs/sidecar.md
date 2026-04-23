@@ -15,4 +15,5 @@
 ## Status Note
 
 - Bridge APIs and connector runtime are available.
+- Connector/sidecar runtime remains an optional attached subsystem; the primary package artifact is the ComfyUI custom node pack.
 - Standalone sidecar/gateway evolution is tracked in `.planning/roadmap.md`.
