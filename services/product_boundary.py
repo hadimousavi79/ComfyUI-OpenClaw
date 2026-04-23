@@ -134,4 +134,3 @@ _PRODUCT_BOUNDARY_CONTRACT: Dict[str, Any] = {
 
 def get_product_boundary_contract() -> Dict[str, Any]:
     return copy.deepcopy(_PRODUCT_BOUNDARY_CONTRACT)
-
