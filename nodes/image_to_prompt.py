@@ -63,7 +63,7 @@ class OpenClawImageToPrompt:
     RETURN_TYPES = ("STRING", "STRING", "STRING")
     RETURN_NAMES = ("caption", "tags", "prompt_suggestion")
     FUNCTION = "generate_prompt"
-    CATEGORY = "moltbot"
+    CATEGORY = "openclaw"
 
     # R154: keep the compatibility method name, but bind the shared helper
     # directly so node wrappers do not duplicate image conversion logic.

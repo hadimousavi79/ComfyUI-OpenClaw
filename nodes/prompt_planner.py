@@ -59,7 +59,7 @@ class OpenClawPromptPlanner:
     RETURN_TYPES = ("STRING", "STRING", "STRING")
     RETURN_NAMES = ("positive", "negative", "params_json")
     FUNCTION = "plan_generation"
-    CATEGORY = "moltbot"
+    CATEGORY = "openclaw"
 
     def plan_generation(
         self, profile: str, requirements: str, style_directives: str, seed: int

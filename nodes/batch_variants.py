@@ -1,5 +1,6 @@
 import json
 import logging
+import random
 from typing import Any, Dict, List, Tuple
 
 try:
@@ -55,7 +56,7 @@ class OpenClawBatchVariants:
     OUTPUT_IS_LIST = (True, True, True)
 
     FUNCTION = "generate_variants"
-    CATEGORY = "moltbot"
+    CATEGORY = "openclaw"
 
     def generate_variants(
         self,
@@ -95,8 +96,6 @@ class OpenClawBatchVariants:
                 # Let's stick to simple increment for now or random python if implied?
                 # "randomized" usually means unpredictable.
                 # Let's implement a simple hash for now to be deterministic but "jumpy"
-                import random
-
                 r = random.Random(seed_base + i)
                 current_seed = r.randint(0, 0xFFFFFFFFFFFFFFFF)
 
