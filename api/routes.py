@@ -52,6 +52,13 @@ else:
     ("AuthTier", "RiskTier", "RoutePlane", "endpoint_metadata"),
 )
 
+(build_legacy_route_deprecation_headers,) = import_attrs_dual(
+    __package__,
+    "..services.legacy_compat",
+    "services.legacy_compat",
+    ("build_legacy_route_deprecation_headers",),
+)
+
 try:
     from aiohttp import web  # type: ignore
 except ModuleNotFoundError:  # pragma: no cover (optional for unit tests)
@@ -730,7 +737,15 @@ def register_dual_route(server, method: str, path: str, handler) -> None:
             print(
                 f"[OpenClaw] DEPRECATION WARNING: Legacy route accessed: {request.path}. Please migrate to /openclaw/* equivalents."
             )
-            return await handler(request)
+            response = await handler(request)
+            if build_legacy_route_deprecation_headers:
+                headers = build_legacy_route_deprecation_headers(
+                    getattr(request, "path", path)
+                )
+                response_headers = getattr(response, "headers", None)
+                if headers and hasattr(response_headers, "update"):
+                    response_headers.update(headers)
+            return response
 
         actual_handler = _deprecated_handler
 
@@ -751,7 +766,9 @@ def register_dual_route(server, method: str, path: str, handler) -> None:
         targets = [path, "/api" + path]
         for t in targets:
             try:
-                server.app.router.add_route(method, t, handler)
+                # IMPORTANT: fallback routes must use the same wrapper as PromptServer.
+                # Registering the raw legacy handler bypasses deprecation telemetry/headers.
+                server.app.router.add_route(method, t, actual_handler)
             except RuntimeError:
                 # Route likely exists (e.g. added by step 1 or duplicate)
                 pass
