@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+    appendChildren,
     applyLegacyClassAliases,
     buildLegacyAliasClassTokens,
+    createDomElement,
     makeEl,
     normalizeLegacyClassTokens,
     normalizeLegacyClassNames,
     parseJsonSafe,
     parseJsonOrThrow,
+    queryRequired,
     isAbortError,
 } from "../../openclaw_utils.js";
 
@@ -16,6 +19,47 @@ describe("openclaw_utils", () => {
         expect(el.tagName).toBe("DIV");
         expect(el.className).toBe("openclaw-card");
         expect(el.textContent).toBe("Hello");
+    });
+
+    it("creates declarative DOM elements without treating text as HTML", () => {
+        const child = createDomElement("span", {
+            className: "openclaw-label",
+            text: "<strong>Run</strong>",
+            dataset: { role: "primary" },
+            attrs: { title: "Run command", "aria-live": "polite" },
+        });
+        const root = createDomElement("div", {
+            className: "openclaw-row",
+            children: [child],
+        });
+
+        expect(root.className).toBe("openclaw-row");
+        expect(root.firstElementChild).toBe(child);
+        expect(child.textContent).toBe("<strong>Run</strong>");
+        expect(child.innerHTML).toBe("&lt;strong&gt;Run&lt;/strong&gt;");
+        expect(child.dataset.role).toBe("primary");
+        expect(child.getAttribute("aria-live")).toBe("polite");
+    });
+
+    it("appends only defined child nodes", () => {
+        const root = document.createElement("div");
+        const first = document.createElement("span");
+        const second = document.createElement("button");
+
+        appendChildren(root, [first, null, undefined, second]);
+
+        expect(Array.from(root.children)).toEqual([first, second]);
+    });
+
+    it("queries required elements with stable owner context", () => {
+        const root = createDomElement("section", {
+            children: [createDomElement("button", { attrs: { id: "run" }, text: "Run" })],
+        });
+
+        expect(queryRequired(root, "#run", "Planner tab").textContent).toBe("Run");
+        expect(() => queryRequired(root, "#missing", "Planner tab")).toThrow(
+            "Planner tab missing required selector: #missing"
+        );
     });
 
     it("normalizes duplicate legacy class tokens", () => {

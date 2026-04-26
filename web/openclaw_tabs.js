@@ -6,11 +6,23 @@ import { ErrorBoundary } from "./ErrorBoundary.js";
 import { STORAGE_KEYS, getMirroredStorageValue, setMirroredStorageValue } from "./openclaw_compat.js";
 import {
     applyLegacyClassAliases,
+    appendChildren,
+    createDomElement,
     normalizeLegacyClassNames,
 } from "./openclaw_utils.js";
 
+/**
+ * @typedef {Object} OpenClawTabDefinition
+ * @property {string} id Stable tab id used for storage and pane ids.
+ * @property {string} title Visible tab label and error-boundary name.
+ * @property {string=} icon Optional icon class for the tab button.
+ * @property {(pane: HTMLElement) => (void|Promise<void>)} render Render function for the tab pane.
+ * @property {boolean=} loaded Internal lazy-render state.
+ */
+
 export class TabManager {
     constructor() {
+        /** @type {OpenClawTabDefinition[]} */
         this.tabs = [
             // { id, title, renderFn, loaded }
         ];
@@ -31,6 +43,10 @@ export class TabManager {
         this._restoreActiveTab();
     }
 
+    /**
+     * Register or replace a tab definition.
+     * @param {OpenClawTabDefinition} tabDef
+     */
     registerTab(tabDef) {
         // Idempotent: replace existing tab definition by id
         const idx = this.tabs.findIndex(t => t.id === tabDef.id);
@@ -53,16 +69,17 @@ export class TabManager {
         this.tabsEl.innerHTML = "";
 
         this.tabs.forEach(tab => {
-            const btn = document.createElement("div");
-            btn.className = "openclaw-tab";
+            const btn = createDomElement("div", { className: "openclaw-tab" });
             if (tab.icon) {
-                const icon = document.createElement("i");
-                icon.className = `openclaw-tab-icon ${tab.icon}`;
-                const label = document.createElement("span");
-                label.className = "openclaw-tab-label";
-                label.textContent = tab.title;
-                btn.appendChild(icon);
-                btn.appendChild(label);
+                appendChildren(btn, [
+                    createDomElement("i", {
+                        className: `openclaw-tab-icon ${tab.icon}`,
+                    }),
+                    createDomElement("span", {
+                        className: "openclaw-tab-label",
+                        text: tab.title,
+                    }),
+                ]);
             } else {
                 btn.textContent = tab.title;
             }
@@ -73,9 +90,10 @@ export class TabManager {
 
             // Create container for tab content if not exists
             if (!this.contentEl.querySelector(`#openclaw-tab-${tab.id}`)) {
-                const pane = document.createElement("div");
+                const pane = createDomElement("div", {
+                    className: "openclaw-tab-pane",
+                });
                 pane.id = `openclaw-tab-${tab.id}`;
-                pane.className = "openclaw-tab-pane";
                 this.contentEl.appendChild(pane);
             }
         });

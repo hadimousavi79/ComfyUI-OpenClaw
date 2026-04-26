@@ -21,10 +21,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from connector.config import ConnectorConfig, load_config
 from connector.contract import CommandResponse
-from connector.platforms.slack_webhook import (
-    SLACK_SIGNING_VERSION,
-    SlackWebhookServer,
-)
+from connector.platforms.slack_webhook import SLACK_SIGNING_VERSION, SlackWebhookServer
 
 SIGNING_SECRET = "test_signing_secret_f59"
 
@@ -155,7 +152,10 @@ class TestF59SlackInteractions(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(routed.text, "/approvals")
         self.assertTrue(routed.metadata["interactive_callback"])
         self.assertEqual(routed.metadata["interaction_type"], "block_actions")
-        self.assertEqual(routed.metadata["response_url"], "https://hooks.slack.com/actions/T_F59/mock")
+        self.assertEqual(
+            routed.metadata["response_url"],
+            "https://hooks.slack.com/actions/T_F59/mock",
+        )
 
     async def test_invalid_signature_rejected_without_routing(self):
         server = _make_server()
@@ -171,7 +171,9 @@ class TestF59SlackInteractions(unittest.IsolatedAsyncioTestCase):
 
     async def test_duplicate_block_action_is_acknowledged_once_without_reroute(self):
         server = _make_server()
-        payload = _block_action_payload(value="/status", action_id="dup", trigger_id="t-dup")
+        payload = _block_action_payload(
+            value="/status", action_id="dup", trigger_id="t-dup"
+        )
         req1 = _build_interaction_request(payload)
         req2 = _build_interaction_request(payload)
 

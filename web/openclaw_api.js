@@ -14,6 +14,35 @@ import {
     withPreconnectHint,
 } from "./openclaw_fetch_wrappers.js";
 
+/**
+ * @typedef {Object} OpenClawFetchOptions
+ * @property {number=} timeout Request timeout in milliseconds.
+ * @property {AbortSignal=} signal Optional caller-owned cancellation signal.
+ * @property {string=} method HTTP method.
+ * @property {HeadersInit=} headers Request headers.
+ * @property {BodyInit|null=} body Request body.
+ */
+
+/**
+ * @typedef {Object} OpenClawFetchSuccess
+ * @property {true} ok
+ * @property {number} status
+ * @property {*} data Parsed JSON value or response text.
+ */
+
+/**
+ * @typedef {Object} OpenClawFetchFailure
+ * @property {false} ok
+ * @property {number} status HTTP status, or 0 for network/timeout/cancelled failures.
+ * @property {string} error Stable error code/message.
+ * @property {*=} data Parsed error payload or response text.
+ * @property {string=} detail Low-level error detail for diagnostics.
+ */
+
+/**
+ * @typedef {OpenClawFetchSuccess|OpenClawFetchFailure} OpenClawFetchResult
+ */
+
 export class OpenClawAPI {
     constructor() {
         this._capabilitiesCache = null;
@@ -77,9 +106,8 @@ export class OpenClawAPI {
     /**
      * Generic fetch wrapper with timeout and error normalization.
      * @param {string} url - The URL to fetch
-     * @param {object} options - Fetch options
-     * @param {number} options.timeout - Timeout in ms (default: 10000)
-     * @param {AbortSignal} options.signal - Optional AbortSignal from caller (R38-Lite)
+     * @param {OpenClawFetchOptions} options - Fetch options
+     * @returns {Promise<OpenClawFetchResult>}
      */
     async fetch(url, options = {}) {
         const { timeout = 10000, signal: externalSignal, ...fetchOptions } = options;

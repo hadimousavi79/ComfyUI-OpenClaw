@@ -20,6 +20,81 @@ export function makeEl(tag, className = "", text = "") {
 }
 
 /**
+ * Build a DOM element from a small declarative option bag.
+ * Text is assigned with textContent; this helper intentionally has no raw HTML path.
+ *
+ * @param {string} tag
+ * @param {{
+ *   className?: string|string[],
+ *   text?: string|number|boolean|null,
+ *   attrs?: Record<string, string|number|boolean|null|undefined>,
+ *   dataset?: Record<string, string|number|boolean|null|undefined>,
+ *   children?: Array<Node|null|undefined>|Node|null|undefined,
+ * }} options
+ * @returns {HTMLElement}
+ */
+export function createDomElement(tag, options = {}) {
+    const el = document.createElement(tag);
+    const className = options.className;
+    if (Array.isArray(className)) {
+        el.className = className.filter(Boolean).join(" ");
+    } else if (className) {
+        el.className = String(className);
+    }
+
+    if (options.text !== undefined && options.text !== null) {
+        el.textContent = String(options.text);
+    }
+
+    Object.entries(options.attrs || {}).forEach(([name, value]) => {
+        if (value === undefined || value === null) return;
+        el.setAttribute(name, String(value));
+    });
+
+    Object.entries(options.dataset || {}).forEach(([name, value]) => {
+        if (value === undefined || value === null) return;
+        el.dataset[name] = String(value);
+    });
+
+    appendChildren(el, options.children || []);
+    return el;
+}
+
+/**
+ * Append only real DOM nodes, allowing callers to keep optional branches concise.
+ * @param {Node} parent
+ * @param {Array<Node|null|undefined>|Node|null|undefined} children
+ * @returns {Node}
+ */
+export function appendChildren(parent, children = []) {
+    const items = Array.isArray(children) ? children : [children];
+    items.flat().forEach((child) => {
+        if (child instanceof Node) {
+            parent.appendChild(child);
+        }
+    });
+    return parent;
+}
+
+/**
+ * Query a required descendant and fail with stable owner context when missing.
+ * @template {Element} T
+ * @param {ParentNode|null|undefined} root
+ * @param {string} selector
+ * @param {string} owner
+ * @returns {T}
+ */
+export function queryRequired(root, selector, owner = "OpenClaw UI") {
+    const found = root && typeof root.querySelector === "function"
+        ? root.querySelector(selector)
+        : null;
+    if (!found) {
+        throw new Error(`${owner} missing required selector: ${selector}`);
+    }
+    return found;
+}
+
+/**
  * F63: prefer canonical `openclaw-*` classes when both legacy and canonical
  * variants are present on the same node.
  */
