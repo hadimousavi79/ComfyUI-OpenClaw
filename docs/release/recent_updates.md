@@ -7,6 +7,17 @@ Newest entries appear first.
 
 <details>
 
+<summary><strong>Host compatibility anchors and inactive-branch preflight diagnostics aligned with current ComfyUI hosts</strong></summary>
+
+- Refreshed the published compatibility matrix for current ComfyUI, standalone frontend, and desktop reference anchors, keeping desktop embedded-frontend lag explicit instead of assuming standalone-frontend parity.
+- Updated workflow portability and preflight diagnostics so muted or bypassed workflow branches are separated from actionable missing-node/model failures when frontend workflow metadata is available.
+- Explorer now surfaces inactive-branch findings as suppressed diagnostics, so operators can still inspect them without treating them as current workflow blockers.
+- Tightened repository ignore rules so public release documentation is not accidentally hidden from version control.
+
+</details>
+
+<details>
+
 <summary><strong>Packaging boundaries, node portability guidance, config ownership seams, and connector extraction diagnostics aligned with the current runtime</strong></summary>
 
 - Made the supported packaging model explicit: the ComfyUI custom node pack remains the primary artifact, the embedded operator platform is the first-class runtime identity, and the connector stays an optional attached subsystem rather than a separate published package.

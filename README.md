@@ -89,6 +89,17 @@ Deployment profiles and hardening references:
 
 <details>
 
+<summary><strong>Host compatibility anchors and inactive-branch preflight diagnostics aligned with current ComfyUI hosts</strong></summary>
+
+- Refreshed the published compatibility matrix for current ComfyUI, standalone frontend, and desktop reference anchors, keeping desktop embedded-frontend lag explicit instead of assuming standalone-frontend parity.
+- Updated workflow portability and preflight diagnostics so muted or bypassed workflow branches are separated from actionable missing-node/model failures when frontend workflow metadata is available.
+- Explorer now surfaces inactive-branch findings as suppressed diagnostics, so operators can still inspect them without treating them as current workflow blockers.
+- Tightened repository ignore rules so public release documentation is not accidentally hidden from version control.
+
+</details>
+
+<details>
+
 <summary><strong>Slack interactive callbacks, canonical node categories, and hardening governance aligned with the current runtime</strong></summary>
 
 - Added Slack interactive callback handling for Block Kit actions, modal submissions, and workflow-style payloads, with signed ingress verification, replay/idempotency checks, bounded external errors, and policy-aware routing for run-affecting actions.
@@ -131,16 +142,6 @@ Deployment profiles and hardening references:
 - Consolidated outbound safe HTTP execution behind one shared `safe_io` executor seam so local-provider checks, connector callbacks, and redirect handling now follow the same SSRF-safe validation, pinning, and redirect re-check rules.
 - Split Security Doctor internals into focused endpoint, runtime, connector, report, and remediation modules while keeping the operator-facing doctor API and remediation workflow unchanged.
 - Added retained audit-chain verification tooling, including a persisted `audit.log.key` sidecar when no environment key is provided, so operators can verify the current audit log plus retained rotations after restart or log rotation.
-
-</details>
-
-<details>
-
-<summary><strong>Provider URL parity and CI harness resilience tightened for local LLM defaults and Playwright bootstrap stability</strong></summary>
-
-- Fixed the built-in `Ollama (Local)` provider default so OpenClaw's OpenAI-compatible requests now target the correct `/v1` surface by default, and existing loopback-root overrides are normalized onto the same bounded path instead of failing on `/models` or `/chat/completions` at the daemon root.
-- Added a provider URL contract matrix that pins built-in provider defaults, adapter endpoint assembly, and bounded Ollama normalization in one regression lane so future `LM Studio`, `Ollama`, and custom OpenAI-compatible drift is caught before release.
-- Hardened the shared Playwright harness bootstrap so a single transient `openclaw.js` module-fetch failure in CI is retried once instead of failing the whole UI load, while still surfacing real import/runtime errors as hard test failures.
 
 </details>
 
@@ -350,6 +351,7 @@ Current builds expose a stable portability contract for the shipped OpenClaw nod
 
 - inventory/preflight surfaces can expose package-level node portability metadata for `openclaw:*` nodes alongside the normal node inventory view
 - when a workflow references an unavailable OpenClaw node, current diagnostics prefer deterministic replacement guidance instead of an opaque missing-node failure
+- muted or bypassed root nodes and subgraph branches are reported as suppressed diagnostics when the submitted workflow shape exposes enough frontend metadata, so inactive branches do not become actionable missing-node/model failures
 - the compatibility class exports (`Moltbot*`) remain in place for existing workflows, but portability guidance is anchored on the canonical `openclaw:*` node identities
 
 If you are moving a workflow between hosts, treat the portability metadata and replacement hints as the supported migration path before attempting ad hoc node renames. The troubleshooting guide covers the operator-facing interpretation of those signals.
@@ -389,7 +391,7 @@ The OpenClaw sidebar includes these built-in tabs. Some tabs are capability-gate
 | `Variants` | Local helper for generating batch variant parameter JSON (seed/range-style sweeps). | [Nodes](#nodes), [Operator UX Features](#operator-ux-features) |
 | `Library` | Manages reusable prompt/params presets and provides pack-oriented library operations in one place. | [Presets](#presets-admin), [Packs](#packs-admin) |
 | `Approvals` | Lists approval gates and supports approve/reject operations, including the same approval objects now surfaced through Slack and Feishu interactive connector actions. | [Triggers + approvals](#triggers--approvals-admin), [Remote Control (Connector)](#remote-control-connector) |
-| `Explorer` | Inventory/preflight diagnostics and snapshot/checkpoint troubleshooting workflows, including snapshot-first inventory refresh state (`snapshot_ts`, `scan_state`, `stale`, `last_error`). | [Operator UX Features](#operator-ux-features), [Troubleshooting](#troubleshooting) |
+| `Explorer` | Inventory/preflight diagnostics and snapshot/checkpoint troubleshooting workflows, including snapshot-first inventory refresh state (`snapshot_ts`, `scan_state`, `stale`, `last_error`) and suppressed inactive-branch findings. | [Operator UX Features](#operator-ux-features), [Troubleshooting](#troubleshooting) |
 | `Packs` | Dedicated pack lifecycle tab for import/export/delete under admin boundary. | [Packs](#packs-admin) |
 | `PNG Info` | Inspects saved generation images through drag-and-drop, file picker, or scoped paste, parses A1111 infotext plus ComfyUI `prompt` / `workflow` metadata, shows extracted prompt and generation fields when recoverable, and keeps raw metadata visible for operator inspection. | [API Overview](#api-overview), [Troubleshooting](#troubleshooting) |
 | `Model Manager` | Searches model catalog/install records, queues managed downloads, monitors task lifecycle, and imports completed tasks into the managed install root with the same trusted download/import contract used by the backend model manager APIs. | [Model manager](#model-manager-admin-f54), [API Overview](#api-overview) |

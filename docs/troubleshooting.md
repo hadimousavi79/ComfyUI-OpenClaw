@@ -37,12 +37,14 @@ What to check:
 1. Open the Explorer / inventory diagnostics view or inspect `/openclaw/preflight/inventory`.
 2. Confirm whether the workflow references `openclaw:*` nodes that are not present on the current host.
 3. Look for portability/replacement guidance rather than renaming nodes blindly.
+4. If Explorer shows inactive-branch suppressed findings, inspect them as context but do not treat them as active blockers unless the corresponding branch is enabled.
 
 Notes:
 
 - Compatibility class names such as `Moltbot*` still exist for older workflows, but the canonical portability contract is anchored on `openclaw:*` node identities.
 - Current shipped nodes use the `openclaw` category in ComfyUI; seeing older `moltbot` category text usually means the installed pack is stale or ComfyUI has not been restarted after update.
 - Current diagnostics may include deterministic replacement hints when an unavailable OpenClaw node can degrade to a more portable workflow pattern.
+- Muted or bypassed root nodes and subgraph branches are separated into suppressed diagnostics when the workflow payload includes enough frontend metadata. Plain API prompt JSON remains deterministic, but it may not contain frontend ancestry needed to identify inactive subgraph context.
 - If no portability guidance is present and the pack itself is loaded correctly, treat that as a real contract gap rather than assuming the workflow can be repaired by arbitrary JSON edits.
 
 ## Operator Doctor

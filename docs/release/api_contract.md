@@ -1,8 +1,8 @@
 # OpenClaw API Contract (v1)
 
 > **Status**: normative
-> **Version**: 1.0.7
-> **Date**: 2026-04-24
+> **Version**: 1.0.8
+> **Date**: 2026-04-26
 
 This document defines the public API contract for OpenClaw. It serves as the authoritative baseline for client compatibility and breaking change policies.
 
@@ -46,6 +46,7 @@ All new integrations should use the `/openclaw/` prefix. Use of `/moltbot/` is d
 | `GET` | `/config` | `/moltbot/config` | Observability | Read-only view of sanitized provider config. |
 | `PUT` | `/config` | `/moltbot/config` | Admin | Update system configuration. |
 | `GET` | `/jobs` | `/moltbot/jobs` | Observability | List recent jobs (Stub/Not Implemented). |
+| `POST` | `/preflight` | `/moltbot/preflight` | Admin | Analyze a workflow or API prompt payload for missing nodes/models and portability diagnostics. |
 | `GET` | `/preflight/inventory` | `/moltbot/preflight/inventory` | Admin | Snapshot-first inventory of nodes/models for operator diagnostics, including refresh-state metadata. |
 
 Reasoning-content redaction contract:
@@ -64,6 +65,13 @@ Inventory diagnostics contract:
 
 - `/preflight/inventory` is snapshot-first and may return before deep scan work finishes
 - clients SHOULD treat `snapshot_ts`, `scan_state`, `stale`, and `last_error` as first-class diagnostics fields rather than assuming a blocking full-rescan model
+
+Preflight workflow diagnostics contract:
+
+- `POST /openclaw/preflight` accepts both API prompt dictionaries and frontend workflow JSON when supplied by operator tooling
+- response summaries distinguish actionable `missing_nodes` / `missing_models` from `suppressed_missing_nodes` / `suppressed_missing_models`
+- suppressed findings represent muted or bypassed root nodes or subgraph branches when the submitted workflow shape provides enough frontend ancestry metadata
+- clients SHOULD display suppressed findings as informational context rather than blocking workflow readiness
 
 ### 1.2 Webhooks & Triggers
 

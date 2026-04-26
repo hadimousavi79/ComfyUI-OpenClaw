@@ -25,6 +25,7 @@ Refactor note:
 - Host-sensitive behaviors should consume the shared host-surface helper rather than inferring desktop vs standalone frontend from ad-hoc globals.
 - Output preview flows should consume the shared asset-ref normalizer rather than assembling `/view` URLs independently in each tab or silently widening runtime behavior to direct `/api/assets` fetches.
 - Explorer/preflight consumers should treat inventory diagnostics as snapshot-first and surface `snapshot_ts`, `scan_state`, `stale`, and `last_error` instead of blocking the UI on full rescans.
+- Explorer/preflight rendering should keep actionable missing-node/model failures separate from suppressed inactive-branch findings returned by the backend.
 
 ## Feature Gating (Capabilities)
 
@@ -82,7 +83,7 @@ If `assist_streaming` is unavailable or the stream transport degrades, Planner/R
 4. Planner: click **Plan Generation** with minimal input and confirm either live preview/stage updates appear (when streaming is supported) or a readable fallback result/error appears.
 5. Refiner: click **Refine Prompts** (with or without image) and confirm either live preview/stage updates appear (when streaming is supported) or a readable fallback result/error appears.
 6. Jobs: verify output previews still resolve for both classic history refs and any asset-backed refs surfaced by callback/history payloads, that asset-service-only refs stay explicit as a bounded fallback state, and that repeated polls do not duplicate rows after reconnect/resume.
-7. Explorer: verify preflight inventory can show `refreshing` / `stale` / `error` state without freezing the tab while deep scan work continues.
+7. Explorer: verify preflight inventory can show `refreshing` / `stale` / `error` state without freezing the tab while deep scan work continues, and verify inactive-branch suppressed findings render separately from actionable failures.
 8. Library/Approvals: if backend endpoints are not enabled, confirm the UI shows a clear error state (no crashes).
 9. If you simulate/fake a stream failure in dev tools, confirm Planner/Refiner retry through the classic non-stream path without duplicate submits or broken loading state.
 
