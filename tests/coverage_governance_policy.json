@@ -50,7 +50,12 @@
       "id": "safe_io",
       "paths": [
         "services/safe_io.py"
-      ]
+      ],
+      "ratchet55_readiness": {
+        "targeted_regression_suite": "tests/test_safe_io.py; tests/test_callback_url_policy.py; tests/test_s36s37r79_egress_hardening.py; tests/test_r185_hotspot_regression_ownership.py",
+        "ownership_status": "targeted-regression-owned",
+        "readiness_notes": "SSRF deny-by-default, host allowlist, private-IP blocking, DNS pinning, and redirect revalidation are covered by focused safe_io suites before any ratchet-55 proposal."
+      }
     },
     {
       "id": "security_boundary",
@@ -59,7 +64,12 @@
         "services/access_control.py",
         "services/csrf_protection.py",
         "services/secrets_encryption.py"
-      ]
+      ],
+      "ratchet55_readiness": {
+        "targeted_regression_suite": "tests/security/test_startup_gate.py; tests/security/test_r99_sensitive_contract.py; tests/security/test_rbac.py; tests/test_s57_secrets_encryption.py; tests/test_r185_hotspot_regression_ownership.py",
+        "ownership_status": "targeted-regression-owned",
+        "readiness_notes": "Startup gate fail-closed, auth/RBAC, CSRF convenience-mode denial, and secret-envelope tamper/failure behavior have explicit targeted suites before any ratchet-55 proposal."
+      }
     },
     {
       "id": "connector_config",

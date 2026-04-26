@@ -20,7 +20,9 @@ class TestExceptionBoundaryGovernance(unittest.TestCase):
                 "services.route_bootstrap._do_full_registration",
                 side_effect=RuntimeError("route-registration-broken"),
             ),
-            patch("services.route_bootstrap.logging.getLogger", return_value=MagicMock()),
+            patch(
+                "services.route_bootstrap.logging.getLogger", return_value=MagicMock()
+            ),
             patch.dict(
                 sys.modules,
                 {"server": SimpleNamespace(PromptServer=prompt_server)},

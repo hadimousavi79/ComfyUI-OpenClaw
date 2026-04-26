@@ -14,6 +14,7 @@ REQUIRED_HOTSPOT_FAMILIES = (
     "config_bootstrap",
 )
 MIN_PROMOTION_REVIEW_CYCLES = 2
+RATCHET55_CRITICAL_FAMILIES = ("safe_io", "security_boundary")
 
 
 @dataclass(frozen=True)
@@ -50,6 +51,28 @@ def _validate_hotspot_family(
         failures.append(
             f"coverage policy: hotspot family {family_id} must define a non-empty paths list"
         )
+
+
+def _validate_ratchet55_readiness(family: dict[str, Any], failures: list[str]) -> None:
+    family_id = family["id"]
+    readiness = family.get("ratchet55_readiness")
+    if not isinstance(readiness, dict):
+        failures.append(
+            f"coverage policy: hotspot family {family_id} must include ratchet55_readiness metadata"
+        )
+        return
+
+    for field_name in (
+        "targeted_regression_suite",
+        "ownership_status",
+        "readiness_notes",
+    ):
+        value = readiness.get(field_name)
+        if not isinstance(value, str) or not value.strip():
+            failures.append(
+                "coverage policy: hotspot family "
+                f"{family_id} ratchet55_readiness missing {field_name}"
+            )
 
 
 def load_and_validate_policy(path: Path) -> tuple[dict[str, Any] | None, list[str]]:
@@ -141,6 +164,24 @@ def load_and_validate_policy(path: Path) -> tuple[dict[str, Any] | None, list[st
             failures.append("coverage policy: each hotspot family must be an object")
             continue
         _validate_hotspot_family(family, seen_family_ids, failures)
+
+    policy_next_stage = None
+    if current_stage in stage_ids:
+        for index, raw_stage in enumerate(stages_raw):
+            if raw_stage.get("id") == current_stage:
+                if index + 1 < len(stages_raw):
+                    policy_next_stage = stages_raw[index + 1].get("id")
+                break
+    if policy_next_stage == "ratchet-55":
+        families_by_id = {
+            family.get("id"): family
+            for family in family_payload
+            if isinstance(family, dict) and isinstance(family.get("id"), str)
+        }
+        for family_id in RATCHET55_CRITICAL_FAMILIES:
+            family = families_by_id.get(family_id)
+            if family is not None:
+                _validate_ratchet55_readiness(family, failures)
 
     missing_declared_required = sorted(set(required_families) - seen_family_ids)
     if missing_declared_required:
