@@ -41,6 +41,7 @@ What to check:
 Notes:
 
 - Compatibility class names such as `Moltbot*` still exist for older workflows, but the canonical portability contract is anchored on `openclaw:*` node identities.
+- Current shipped nodes use the `openclaw` category in ComfyUI; seeing older `moltbot` category text usually means the installed pack is stale or ComfyUI has not been restarted after update.
 - Current diagnostics may include deterministic replacement hints when an unavailable OpenClaw node can degrade to a more portable workflow pattern.
 - If no portability guidance is present and the pack itself is loaded correctly, treat that as a real contract gap rather than assuming the workflow can be repaired by arbitrary JSON edits.
 

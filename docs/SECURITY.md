@@ -159,7 +159,7 @@ If this acknowledgement is missing in public profile, deployment profile checks 
 
 Connector ingress posture is fail-closed in strict profiles:
 
-- if connector platform ingress is active (Telegram/Discord/LINE/WhatsApp/WeChat/Kakao/Slack)
+- if connector platform ingress is active (Telegram/Discord/LINE/WhatsApp/WeChat/Kakao/Slack/Feishu)
 - and matching allowlist variables are missing
 - startup/deployment checks fail closed (`DP-PUBLIC-009` for public profile)
 
@@ -236,6 +236,7 @@ OpenClaw validates custom LLM `base_url` settings to prevent Server-Side Request
 
 * **Default**: known providers and localhost-safe paths are allowed.
 * **Pinned connect contract**: on supported CPython versions (current baseline: 3.10+), the consolidated `safe_io` outbound executor dials resolved IPs directly for HTTP/HTTPS and keeps TLS `server_hostname` on the original host; the no-skip `tests.test_s70_ssrf_pinning_regression` lane is intended to fail loudly if stdlib connect behavior drifts.
+* **Redirect handling**: redirect targets are revalidated against host allowlists, private/reserved-IP blocking, and pinned-connect rules before any follow-up connection is opened.
 * **Custom base URL**:
   - requires explicit opt-in:
 

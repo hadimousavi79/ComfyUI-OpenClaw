@@ -54,6 +54,7 @@ Slack multi-workspace notes:
 - `GET /openclaw/connector/installations` diagnostics may include per-install health metadata plus aggregate `health_counts`.
 - Slack lifecycle events such as `tokens_revoked`, `app_uninstalled`, and rate-limit degradation update installation health so outbound replies fail closed or degrade predictably for the affected workspace.
 - In multi-workspace mode, outbound replies and delayed result deliveries resolve the bot token by workspace binding and keep Slack thread context when replying back to the originating conversation.
+- Slack interactive callbacks use the configured interactions path, signature verification, replay/idempotency checks, and connector policy mapping before accepting action payloads.
 
 Feishu / Lark notes:
 
@@ -447,7 +448,7 @@ Slack uses the Events API webhook mode in OpenClaw. You must expose the endpoint
      - `channels:history` (public channel messages)
      - `groups:history` (private channel messages)
    - For legacy single-workspace mode, click **Install to Workspace** and copy the **Bot User OAuth Token** (`xoxb-...`).
-   - For F58 multi-workspace mode, configure a redirect URL and let OpenClaw handle installs through its OAuth routes.
+   - For multi-workspace mode, configure a redirect URL and let OpenClaw handle installs through its OAuth routes.
 
 3. **Configure connector environment variables**
 
@@ -458,6 +459,7 @@ Slack uses the Events API webhook mode in OpenClaw. You must expose the endpoint
    OPENCLAW_CONNECTOR_PUBLIC_BASE_URL=https://your-public-host
    OPENCLAW_CONNECTOR_SLACK_OAUTH_INSTALL_PATH=/slack/install
    OPENCLAW_CONNECTOR_SLACK_OAUTH_CALLBACK_PATH=/slack/oauth/callback
+   OPENCLAW_CONNECTOR_SLACK_INTERACTIONS_PATH=/slack/interactions
    OPENCLAW_CONNECTOR_SLACK_ALLOWED_USERS=U12345,U67890
    OPENCLAW_CONNECTOR_SLACK_ALLOWED_CHANNELS=C12345
    OPENCLAW_CONNECTOR_SLACK_BIND=127.0.0.1
@@ -469,9 +471,10 @@ Slack uses the Events API webhook mode in OpenClaw. You must expose the endpoint
    ```
 
    Notes:
-   - Legacy single-workspace fallback can still set `OPENCLAW_CONNECTOR_SLACK_BOT_TOKEN=xoxb-...`; F58 multi-workspace mode no longer requires that token at startup if OAuth install flow is configured.
+   - Legacy single-workspace fallback can still set `OPENCLAW_CONNECTOR_SLACK_BOT_TOKEN=xoxb-...`; multi-workspace mode no longer requires that token at startup if OAuth install flow is configured.
    - `OPENCLAW_CONNECTOR_ADMIN_TOKEN` must match server `OPENCLAW_ADMIN_TOKEN` if server-side admin token is enabled.
    - Slack ingress is fail-closed: invalid/missing signature, stale timestamp, and replayed events are rejected.
+   - Slack interactive callbacks use the same signing-secret verification and route actions through the connector policy layer before executing run-affecting behavior.
    - OAuth callbacks also fail closed on invalid or replayed `state` values.
    - External OAuth/install failures intentionally use bounded generic text; inspect connector logs and installation diagnostics for redacted detail instead of expecting raw exception text in the callback response.
 
@@ -480,10 +483,11 @@ Slack uses the Events API webhook mode in OpenClaw. You must expose the endpoint
    - Expose local endpoint to public HTTPS (Cloudflare Tunnel/ngrok/reverse proxy):
      - local upstream: `http://127.0.0.1:8095`
      - public URL: `https://<public-host>/slack/events`
+     - interactions URL: `https://<public-host>/slack/interactions`
      - install URL: `https://<public-host>/slack/install`
      - callback URL: `https://<public-host>/slack/oauth/callback`
 
-5. **Enable Event Subscriptions**
+5. **Enable Event Subscriptions and Interactivity**
    - Go to **Event Subscriptions** and enable events.
    - Set **Request URL** to `https://<public-host>/slack/events`.
    - Slack sends `url_verification`; connector responds automatically.
@@ -492,12 +496,15 @@ Slack uses the Events API webhook mode in OpenClaw. You must expose the endpoint
      - `message.channels`
      - `message.groups`
      - `message.im`
+   - Go to **Interactivity & Shortcuts** and enable interactivity.
+   - Set **Request URL** to `https://<public-host>/slack/interactions`.
 
 6. **Invite and validate**
    - Open `https://<public-host>/slack/install` and complete the workspace install.
    - Invite the app to target channels: `/invite @YourBot`.
    - In channel: `@YourBot /status` (when `OPENCLAW_CONNECTOR_SLACK_REQUIRE_MENTION=true`).
    - In DM: `/help`.
+   - For approval or action-capable replies, press a rendered Slack button and confirm the connector logs show a signed interaction accepted or a bounded policy rejection.
    - Verify connector logs show signed ingress accepted and replies delivered.
    - Verify `GET /openclaw/connector/installations` shows the Slack workspace binding and health state `ok`.
    - If you test uninstall/token-revoke scenarios, verify the installation health flips to `revoked` or `invalid_token` and that subsequent replies for that workspace fail closed until reinstalled.

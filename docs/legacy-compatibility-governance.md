@@ -32,7 +32,9 @@ Removal requires all of these conditions:
 | `header-x-moltbot-aliases` | Header | `X-Moltbot-*` request headers | `X-OpenClaw-*` request headers | `deprecated-observed` | `legacy_api_hits` and warning logs |
 | `environment-moltbot-prefix` | Environment | `MOLTBOT_*` environment variables | `OPENCLAW_*` environment variables | `retained-compatibility` | configuration diagnostics and warning logs |
 | `ui-class-moltbot-prefix` | UI class | `moltbot-*` CSS classes and local UI keys | `openclaw-*` CSS classes and local UI keys | `retained-compatibility` | frontend compatibility helper tests and operator reports |
-| `workflow-node-moltbot-classes` | Workflow node | `Moltbot*` node class aliases and `moltbot` node category | `OpenClaw*` node classes and `openclaw` node category | `retained-compatibility` | workflow portability diagnostics and node-registration regression tests |
+| `workflow-node-moltbot-classes` | Workflow node | `Moltbot*` node class aliases | `OpenClaw*` node classes and `openclaw` node category | `retained-compatibility` | workflow portability diagnostics and node-registration regression tests |
+
+The historical `moltbot` node category is no longer the current display category. Current shipped nodes use `openclaw`; legacy workflow compatibility is preserved through the `Moltbot*` class aliases rather than through legacy category metadata.
 
 ## Operator Visibility
 

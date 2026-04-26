@@ -89,6 +89,18 @@ Deployment profiles and hardening references:
 
 <details>
 
+<summary><strong>Slack interactive callbacks, canonical node categories, and hardening governance aligned with the current runtime</strong></summary>
+
+- Added Slack interactive callback handling for Block Kit actions, modal submissions, and workflow-style payloads, with signed ingress verification, replay/idempotency checks, bounded external errors, and policy-aware routing for run-affecting actions.
+- Aligned shipped node metadata on the canonical `openclaw` category while keeping legacy `Moltbot*` class aliases available for existing workflows.
+- Tightened node and frontend maintainability by moving batch-variant randomized seed imports to module scope and keeping tab DOM wiring on shared text-safe helper paths.
+- Added explicit verification ownership for the `safe_io` and security-boundary hotspot families so future coverage ratchets depend on targeted regressions instead of broad coverage alone.
+- Hardened exception-boundary governance around selected startup and connector paths so unexpected route/bootstrap or trust-parsing failures are surfaced instead of silently masked.
+
+</details>
+
+<details>
+
 <summary><strong>Packaging boundaries, node portability guidance, config ownership seams, and connector extraction diagnostics aligned with the current runtime</strong></summary>
 
 - Made the supported packaging model explicit: the ComfyUI custom node pack remains the primary artifact, the embedded operator platform is the first-class runtime identity, and the connector stays an optional attached subsystem rather than a separate published package.
@@ -129,18 +141,6 @@ Deployment profiles and hardening references:
 - Fixed the built-in `Ollama (Local)` provider default so OpenClaw's OpenAI-compatible requests now target the correct `/v1` surface by default, and existing loopback-root overrides are normalized onto the same bounded path instead of failing on `/models` or `/chat/completions` at the daemon root.
 - Added a provider URL contract matrix that pins built-in provider defaults, adapter endpoint assembly, and bounded Ollama normalization in one regression lane so future `LM Studio`, `Ollama`, and custom OpenAI-compatible drift is caught before release.
 - Hardened the shared Playwright harness bootstrap so a single transient `openclaw.js` module-fetch failure in CI is retried once instead of failing the whole UI load, while still surfacing real import/runtime errors as hard test failures.
-
-</details>
-
-<details>
-
-<summary><strong>PNG Info sidebar workflow added with ComfyUI metadata extraction, better large-image handling, and lower-noise operator alerts</strong></summary>
-
-- Added a new `PNG Info` sidebar tab with drag-and-drop, file picker, scoped paste, preview rendering, prompt copy actions, structured summary cards, and raw metadata inspection for saved generation images.
-- Added backend metadata parsing for A1111 infotext and ComfyUI `prompt` / `workflow` metadata, including prompt/sampler/model/size extraction from standard ComfyUI graphs and a larger dedicated payload ceiling for original metadata-bearing images.
-- Improved operator-facing UX by making large-image failures explain the metadata-preservation constraint more clearly, letting the PNG Info input area scroll with the rest of the content, and moving prompt copy surfaces to the top of the information area.
-- Reduced noise in ComfyUI prompt extraction so generic custom `CLIPTextEncode*` nodes now prefer explicit prompt-bearing keys instead of surfacing parser/config strings as if they were prompt text.
-- Tightened queue-monitor alert sensitivity so sidebar startup races no longer generate persistent disconnect noise unless the backend stays unavailable long enough to look like a real incident.
 
 </details>
 
@@ -340,6 +340,8 @@ Nodes are exported as `Moltbot*` class names for compatibility, but appear as `o
 - `openclaw: Image to Prompt`
 - `openclaw: Batch Variants`
 
+The current node category is `openclaw`; serialized workflows that still reference the legacy `Moltbot*` class names continue to load through retained compatibility aliases.
+
 See `web/docs/` for node usage notes.
 
 ### Node Portability and Workflow Fallback
@@ -365,6 +367,8 @@ Current sidebar composition keeps `web/openclaw_ui.js` as the shell root and rou
 - persistent operator notifications: `web/openclaw_notification_center.js`
 - tab registration/remount behavior: `web/openclaw_tabs.js`
 - shared error + compatibility helpers: `web/openclaw_utils.js`
+
+New shell/tab wiring should use the shared text-safe DOM helpers in `web/openclaw_utils.js` instead of duplicating ad hoc element construction in individual tabs.
 
 Canonical DOM/class ownership is now centered on `openclaw-*`; legacy `moltbot-*` class compatibility is still supported through shared runtime aliasing instead of duplicated markup in each tab template.
 
@@ -666,7 +670,7 @@ The connector currently remains an **optional attached subsystem inside this rep
 - **Secure**: Outbound-only for Telegram/Discord. LINE/WhatsApp/WeChat/KakaoTalk/Slack require inbound HTTPS (webhook), while Slack can also use Socket Mode and Feishu can run in either webhook or long-connection mode with a dedicated callback ingress path.
 - **WeChat encrypted mode**: Official Account encrypted webhook mode is supported when AES settings are configured.
 - **KakaoTalk response safety**: QuickReply limits and safe fallback handling are enforced for reliable payload behavior.
-- **Slack multi-workspace mode**: Workspace installs can be handled through connector-managed OAuth install/callback routes with per-workspace token binding and fail-closed health diagnostics.
+- **Slack multi-workspace and interactive mode**: Workspace installs can be handled through connector-managed OAuth install/callback routes with per-workspace token binding, fail-closed health diagnostics, and signed interactive callback handling for action payloads.
 - **Feishu/Lark multi-account mode**: Connector-managed account/workspace bindings support tenant-aware installation resolution, interactive approval cards, and signed callback handling without exposing raw app secrets or widening command trust implicitly.
 - **Bounded connector numeric envs**: Delivery/media/time-budget settings, bind ports, rate limits, and command-length knobs now clamp or fall back to documented defaults with warnings instead of crashing connector startup on malformed values.
 - **Packaging diagnostics**: Admin operators/maintainers can inspect `/openclaw/connector/extraction-contract` for the current in-repo recommendation plus the minimum seam families required before any future split.

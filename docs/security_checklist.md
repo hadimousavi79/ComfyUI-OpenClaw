@@ -68,7 +68,7 @@
 | Rate limiting | Enabled | 10 req/min/user, 30 req/min/channel |
 | Debug mode | Disabled | No sensitive logging |
 | Replay protection | Enabled | LINE webhooks reject replays >5min old |
-| Feishu interactive callbacks | Signed + deduped | Callback actions reject stale/replayed envelopes and degrade untrusted run actions to approval flow |
+| Slack / Feishu interactive callbacks | Signed + deduped | Callback actions reject stale/replayed envelopes and degrade untrusted run actions to approval flow |
 
 ## 📞 Support
 
