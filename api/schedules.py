@@ -16,12 +16,20 @@ from typing import Optional
 # can silently import another pack's module and break auth/approval semantics.
 if __package__ and "." in __package__:
     from ..services.aiohttp_compat import import_aiohttp_web
+    from ..services.scheduler.delivery_contract import (
+        DeliveryContractError,
+        normalize_schedule_delivery,
+    )
     from ..services.scheduler.models import Schedule, TriggerType
     from ..services.scheduler.storage import get_schedule_store
     from ..services.templates import is_template_allowed
     from ..services.webhook_auth import AuthError
 else:  # pragma: no cover (test-only import mode)
     from services.aiohttp_compat import import_aiohttp_web  # type: ignore
+    from services.scheduler.delivery_contract import (  # type: ignore
+        DeliveryContractError,
+        normalize_schedule_delivery,
+    )
     from services.scheduler.models import Schedule, TriggerType  # type: ignore
     from services.scheduler.storage import get_schedule_store  # type: ignore
     from services.templates import is_template_allowed  # type: ignore
@@ -29,6 +37,10 @@ else:  # pragma: no cover (test-only import mode)
 
 logger = logging.getLogger("ComfyUI-OpenClaw.api.schedules")
 web = import_aiohttp_web()
+
+
+def _delivery_error_response(exc: DeliveryContractError) -> web.Response:
+    return web.json_response({"error": str(exc), "code": exc.code}, status=400)
 
 
 def _get_scheduler_runner():
@@ -157,6 +169,8 @@ class ScheduleHandlers:
                 timezone=data.get("timezone", "local"),
                 enabled=data.get("enabled", True),
             )
+        except DeliveryContractError as e:
+            return _delivery_error_response(e)
         except ValueError as e:
             return web.json_response({"error": str(e)}, status=400)
 
@@ -209,7 +223,10 @@ class ScheduleHandlers:
         if "inputs" in data:
             existing.inputs = data["inputs"]
         if "delivery" in data:
-            existing.delivery = data["delivery"]
+            try:
+                existing.delivery = normalize_schedule_delivery(data["delivery"])
+            except DeliveryContractError as e:
+                return _delivery_error_response(e)
         if "timezone" in data:
             existing.timezone = data["timezone"]
         if "enabled" in data:
@@ -218,6 +235,8 @@ class ScheduleHandlers:
         # Re-validate
         try:
             existing.validate()
+        except DeliveryContractError as e:
+            return _delivery_error_response(e)
         except ValueError as e:
             return web.json_response({"error": str(e)}, status=400)
 

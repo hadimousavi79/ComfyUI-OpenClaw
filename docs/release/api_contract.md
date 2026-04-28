@@ -185,6 +185,16 @@ Model-manager contract notes:
 | `POST` | `/approvals/{id}/approve` | Approve a pending request. |
 | `POST` | `/approvals/{id}/reject` | Reject a pending request. |
 
+Schedule `delivery` is normalized before persistence. Supported fields are
+`platform`, `target_id` (legacy aliases such as `channel_id` are accepted),
+`thread_id` (aliases such as `thread_ts`, `topic_id`, and `message_thread_id`
+are accepted), `workspace_id`, `account_id`, `mode`, and `failure_alert`.
+Omitting `delivery` on update preserves the existing target, `delivery: null`
+clears it, and `{"enabled": false}` or `{"mode": "none"}` records explicit
+no-delivery. Invalid delivery targets are rejected before persistence with
+bounded codes: `delivery_malformed`, `delivery_ambiguous`, or
+`delivery_unsupported`.
+
 ### 1.6 Bridge (Sidecar)
 
 **Base Path**: `/bridge/`

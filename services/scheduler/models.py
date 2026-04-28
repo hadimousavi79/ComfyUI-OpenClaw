@@ -11,6 +11,8 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from .delivery_contract import normalize_schedule_delivery
+
 logger = logging.getLogger("ComfyUI-OpenClaw.services.scheduler")
 
 
@@ -71,6 +73,7 @@ class Schedule:
 
     def __post_init__(self):
         """Validation after initialization."""
+        self.delivery = normalize_schedule_delivery(self.delivery)
         self.validate()
 
     def validate(self) -> None:
@@ -108,10 +111,7 @@ class Schedule:
 
         # Delivery validation (if present)
         if self.delivery:
-            if "url" in self.delivery:
-                url = self.delivery["url"]
-                if not url.startswith(("http://", "https://")):
-                    raise ValueError("delivery.url must be http(s)")
+            self.delivery = normalize_schedule_delivery(self.delivery)
 
         if self.compute_error_count < 0:
             raise ValueError("compute_error_count must be >= 0")
