@@ -31,6 +31,10 @@ LLM_ENV_MAPPINGS: Dict[str, Tuple[str, str]] = {
         "OPENCLAW_MAX_FAILOVER_CANDIDATES",
         "MOLTBOT_MAX_FAILOVER_CANDIDATES",
     ),
+    "allow_private_network": (
+        "OPENCLAW_LLM_ALLOW_PRIVATE_NETWORK",
+        "MOLTBOT_LLM_ALLOW_PRIVATE_NETWORK",
+    ),
 }
 
 GENERIC_LLM_API_KEY_ENV_KEYS = (

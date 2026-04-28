@@ -87,6 +87,52 @@ class TestSSRFPolicy(unittest.TestCase):
             sanitized, errors = validate_config_update(updates)
             self.assertEqual(errors, [])
 
+    def test_scoped_private_network_allows_exact_provider_target_only(self):
+        updates = {
+            "provider": "custom",
+            "base_url": "http://192.168.1.1:8080/v1",
+            "allow_private_network": True,
+        }
+        with patch.dict(
+            os.environ,
+            {"OPENCLAW_ALLOW_CUSTOM_BASE_URL": "1"},
+            clear=True,
+        ):
+            sanitized, errors = validate_config_update(updates)
+
+        self.assertEqual(errors, [])
+        self.assertEqual(sanitized["base_url"], "http://192.168.1.1:8080/v1")
+        self.assertTrue(sanitized["allow_private_network"])
+
+    def test_scoped_private_network_keeps_other_hosts_blocked(self):
+        controls = get_llm_egress_controls(
+            "custom",
+            "http://192.168.1.1:8080/v1",
+            allow_private_network=True,
+        )
+
+        self.assertTrue(controls["allow_private_network"])
+        self.assertIn("192.168.1.1", controls["allow_hosts"])
+        self.assertNotIn("192.168.1.2", controls["allow_hosts"])
+
+    def test_scoped_private_network_keeps_exact_hosts_when_allow_any_public_enabled(
+        self,
+    ):
+        with patch.dict(
+            os.environ,
+            {"OPENCLAW_ALLOW_ANY_PUBLIC_LLM_HOST": "1"},
+            clear=True,
+        ):
+            controls = get_llm_egress_controls(
+                "custom",
+                "http://192.168.1.1:8080/v1",
+                allow_private_network=True,
+            )
+
+        self.assertTrue(controls["allow_any_public_host"])
+        self.assertIsNotNone(controls["allow_hosts"])
+        self.assertIn("192.168.1.1", controls["allow_hosts"])
+
     def test_egress_controls_local_provider_loopback_only(self):
         controls = get_llm_egress_controls("ollama", "http://127.0.0.1:11434")
         self.assertIsNotNone(controls["allow_loopback_hosts"])

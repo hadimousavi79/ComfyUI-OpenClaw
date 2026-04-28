@@ -160,6 +160,41 @@ class TestLLMClientPluginIntegration(unittest.TestCase):
     @patch("services.llm_client.PLUGINS_AVAILABLE", False)
     @patch("services.runtime_config.get_effective_config")
     @patch("services.effective_config.get_effective_config")
+    @patch("services.llm_client.requires_api_key", return_value=True)
+    @patch("services.llm_client.get_api_key_for_provider", return_value="sk-test")
+    @patch("services.llm_client.openai_compat.make_request")
+    def test_scoped_private_network_reaches_runtime_provider_request(
+        self,
+        mock_request,
+        _mock_key,
+        _mock_requires_key,
+        mock_effective_config_facade,
+        mock_runtime_config,
+    ):
+        config_payload = (
+            {
+                "provider": "custom",
+                "model": "local-model",
+                "base_url": "http://192.168.2.27:8080/v1",
+                "timeout_sec": 120,
+                "max_retries": 3,
+                "allow_private_network": True,
+            },
+            None,
+        )
+        mock_runtime_config.return_value = config_payload
+        mock_effective_config_facade.return_value = config_payload
+        mock_request.return_value = {"text": "test", "raw": {}}
+
+        client = LLMClient()
+        client.complete(system="test", user_message="test")
+
+        self.assertFalse(mock_request.call_args.kwargs["allow_insecure_base_url"])
+        self.assertTrue(mock_request.call_args.kwargs["allow_private_network"])
+
+    @patch("services.llm_client.PLUGINS_AVAILABLE", False)
+    @patch("services.runtime_config.get_effective_config")
+    @patch("services.effective_config.get_effective_config")
     @patch("services.llm_client.requires_api_key", return_value=False)
     @patch("services.llm_client.get_api_key_for_provider", return_value=None)
     @patch("services.llm_client.openai_compat.make_request")

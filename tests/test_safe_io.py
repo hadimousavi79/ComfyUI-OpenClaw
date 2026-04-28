@@ -231,6 +231,30 @@ class TestURLSafety(unittest.TestCase):
             )
         self.assertIn("Private/reserved IP", str(ctx.exception))
 
+    @patch("socket.getaddrinfo")
+    def test_private_network_allowance_requires_exact_host_allowlist(self, mock_dns):
+        """Scoped private-network allowance must not widen allow-any-public mode."""
+        mock_dns.return_value = [(2, 1, 6, "", ("192.168.1.9", 443))]
+
+        with self.assertRaises(SSRFError) as ctx:
+            validate_outbound_url(
+                "https://not-configured.example",
+                allow_any_public_host=True,
+                allow_private_network=True,
+            )
+        self.assertIn("exact host allowlist", str(ctx.exception))
+
+        result = validate_outbound_url(
+            "https://configured.example",
+            allow_hosts={"configured.example"},
+            allow_any_public_host=True,
+            allow_private_network=True,
+        )
+        self.assertEqual(
+            result,
+            ("https", "configured.example", 443, ["192.168.1.9"]),
+        )
+
     @patch("services.safe_io._build_pinned_opener")
     @patch("services.safe_io.validate_outbound_url")
     def test_safe_request_json_get_without_body(self, mock_validate, mock_build):

@@ -58,6 +58,7 @@ Multi-tenant note:
 | :--- | :--- | :--- |
 | `OPENCLAW_LLM_ALLOWED_HOSTS` | - | Comma-separated list of additional exact public hosts for custom base URLs. |
 | `OPENCLAW_ALLOW_ANY_PUBLIC_LLM_HOST` | `0` | Set `1` to bypass host allowlist and allow any public IP. |
+| `OPENCLAW_LLM_ALLOW_PRIVATE_NETWORK` | `0` | Set `1` to allow the configured LLM `base_url` host to resolve to private/reserved IPs while keeping exact-host scope and DNS pinning. |
 | `OPENCLAW_ALLOW_INSECURE_BASE_URL` | `0` | Set `1` to allow HTTP or private IP targets (Dangerous!). |
 
 Notes:
@@ -66,8 +67,8 @@ Notes:
   - `ollama` -> `http://127.0.0.1:11434/v1`
   - `lmstudio` -> `http://localhost:1234/v1`
 - Local loopback provider targets do not require enabling insecure SSRF flags.
-- `OPENCLAW_LLM_ALLOWED_HOSTS` does not allow private/reserved IPs; those still require `OPENCLAW_ALLOW_INSECURE_BASE_URL=1`.
-- The same insecure override applies to config-save validation, `/openclaw/llm/models`, and outbound provider requests.
+- `OPENCLAW_LLM_ALLOWED_HOSTS` does not allow private/reserved IPs; those require scoped `allow_private_network` for the configured LLM target or `OPENCLAW_ALLOW_INSECURE_BASE_URL=1`.
+- The same scoped private-network setting and insecure override apply to config-save validation, `/openclaw/llm/models`, and outbound provider requests.
 - Wildcard entries such as `*` are not supported in `OPENCLAW_LLM_ALLOWED_HOSTS`.
 
 ### 2.2 Security & Authentication

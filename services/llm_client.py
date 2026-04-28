@@ -185,6 +185,9 @@ class LLMClient:
         self.max_retries = (
             max_retries if max_retries is not None else eff_config.get("max_retries", 3)
         )
+        self.allow_private_network = bool(
+            eff_config.get("allow_private_network", False)
+        )
 
         # Get provider info
         self.provider_info = get_provider_info(self.provider)
@@ -344,7 +347,11 @@ class LLMClient:
         # IMPORTANT:
         # Keep provider egress controls centralized. Falling back to policy-only or
         # ad-hoc allowlists causes path drift and can reintroduce S65 regressions.
-        return get_llm_egress_controls(provider, base_url or "")
+        return get_llm_egress_controls(
+            provider,
+            base_url or "",
+            allow_private_network=self.allow_private_network,
+        )
 
     def _allow_insecure_base_url(self) -> bool:
         return (
@@ -386,6 +393,7 @@ class LLMClient:
                 allow_any_public_host=bool(controls.get("allow_any_public_host")),
                 allow_loopback_hosts=controls.get("allow_loopback_hosts"),
                 allow_insecure_base_url=self._allow_insecure_base_url(),
+                allow_private_network=bool(controls.get("allow_private_network")),
                 policy=STANDARD_OUTBOUND_POLICY,
             )
             return True
@@ -904,6 +912,7 @@ class LLMClient:
             allow_any_public_host=bool(egress_controls.get("allow_any_public_host")),
             allow_loopback_hosts=egress_controls.get("allow_loopback_hosts"),
             allow_insecure_base_url=self._allow_insecure_base_url(),
+            allow_private_network=bool(egress_controls.get("allow_private_network")),
         )
 
     def _complete_openai_compat(
@@ -951,6 +960,9 @@ class LLMClient:
                     ),
                     allow_loopback_hosts=egress_controls.get("allow_loopback_hosts"),
                     allow_insecure_base_url=self._allow_insecure_base_url(),
+                    allow_private_network=bool(
+                        egress_controls.get("allow_private_network")
+                    ),
                     on_text_delta=on_text_delta,
                 )
             except Exception as e:
@@ -973,6 +985,7 @@ class LLMClient:
             allow_any_public_host=bool(egress_controls.get("allow_any_public_host")),
             allow_loopback_hosts=egress_controls.get("allow_loopback_hosts"),
             allow_insecure_base_url=self._allow_insecure_base_url(),
+            allow_private_network=bool(egress_controls.get("allow_private_network")),
         )
 
     def get_provider_summary(self) -> Dict[str, Any]:

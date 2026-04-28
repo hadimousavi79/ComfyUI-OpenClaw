@@ -126,7 +126,7 @@ This is expected under the current SSRF policy.
 
 - `OPENCLAW_ALLOW_REMOTE_ADMIN=1` only allows remote admin access; it does not relax outbound LLM egress rules.
 - `OPENCLAW_LLM_ALLOWED_HOSTS` only extends the exact-host allowlist for custom public hosts.
-- Private/reserved IP targets such as `192.168.x.x`, `10.x.x.x`, and `172.16.x.x` remain blocked unless `OPENCLAW_ALLOW_INSECURE_BASE_URL=1` is also set.
+- Private/reserved IP targets such as `192.168.x.x`, `10.x.x.x`, and `172.16.x.x` remain blocked unless the scoped `allow_private_network` LLM setting is enabled for the configured target, or `OPENCLAW_ALLOW_INSECURE_BASE_URL=1` is also set.
 - `OPENCLAW_ALLOW_ANY_PUBLIC_LLM_HOST=1` does not allow private/reserved IPs.
 - `OPENCLAW_LLM_ALLOWED_HOSTS=*` is not a wildcard and will not bypass the policy.
 
@@ -136,7 +136,7 @@ Correct setup flow:
 2. If you need a custom public LLM host, set:
    - `OPENCLAW_ALLOW_CUSTOM_BASE_URL=1`
    - `OPENCLAW_LLM_ALLOWED_HOSTS=<exact-host>` or `OPENCLAW_ALLOW_ANY_PUBLIC_LLM_HOST=1`
-3. If you intentionally need a LAN/private-IP target, set `OPENCLAW_ALLOW_INSECURE_BASE_URL=1`, accept the SSRF risk, and fully restart ComfyUI.
+3. If you intentionally need a LAN/private-IP target, prefer enabling `allow_private_network` only for that configured LLM target. Use `OPENCLAW_ALLOW_INSECURE_BASE_URL=1` only when you intentionally accept the broader SSRF risk, then fully restart ComfyUI.
 4. On Windows portable, set environment variables in the same launcher that starts `python_embeded\\python.exe`, or restart after `setx` / System Properties changes.
 5. Verify the effective value in the same embedded Python runtime:
 
@@ -146,8 +146,8 @@ python_embeded\python.exe -c "import os; print(repr(os.environ.get('OPENCLAW_LLM
 
 Safer alternative:
 
-- keep the LLM behind a reviewed public HTTPS reverse proxy and allowlist that public host, instead of enabling `OPENCLAW_ALLOW_INSECURE_BASE_URL`
-- on current builds, once that override is intentionally enabled and the process is restarted, both Remote Admin validation and `/openclaw/llm/models` should follow the same decision
+- keep the LLM behind a reviewed public HTTPS reverse proxy and allowlist that public host, instead of enabling private-network or insecure overrides
+- on current builds, the scoped private-network setting and insecure override are both applied consistently by Remote Admin validation and `/openclaw/llm/models`
 
 ## Admin Token: server-side vs UI
 

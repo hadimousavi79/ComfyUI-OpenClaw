@@ -75,6 +75,7 @@ def make_request(
     allow_any_public_host: bool = False,
     allow_loopback_hosts: Optional[set[str]] = None,
     allow_insecure_base_url: bool = False,
+    allow_private_network: bool = False,
 ) -> Dict[str, Any]:
     """
     Make a request to Anthropic /v1/messages endpoint.
@@ -108,6 +109,7 @@ def make_request(
             allow_any_public_host=allow_any_public_host,
             allow_loopback_hosts=allow_loopback_hosts,
             allow_insecure_base_url=allow_insecure_base_url,
+            allow_private_network=allow_private_network,
         )
 
         # Extract text from response

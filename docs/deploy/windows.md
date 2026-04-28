@@ -65,9 +65,9 @@ If Remote Admin is running on this Windows host, but your custom/OpenAI-compatib
 
 - `OPENCLAW_LLM_ALLOWED_HOSTS` only allows additional exact public hosts.
 - `OPENCLAW_ALLOW_ANY_PUBLIC_LLM_HOST=1` still applies only to public hosts.
-- Private/reserved LAN IPs still require `OPENCLAW_ALLOW_INSECURE_BASE_URL=1`.
+- Private/reserved LAN IPs still require the scoped `allow_private_network` LLM setting for that configured target, or `OPENCLAW_ALLOW_INSECURE_BASE_URL=1`.
 - `OPENCLAW_LLM_ALLOWED_HOSTS=*` is not supported.
-- On current builds, that same override is honored by both Remote Admin validation and `/openclaw/llm/models` refresh requests after a full restart.
+- On current builds, that same scoped/private or insecure decision is honored by both Remote Admin validation and `/openclaw/llm/models` refresh requests after a full restart.
 
 Recommended verification in the same embedded runtime:
 
@@ -75,7 +75,7 @@ Recommended verification in the same embedded runtime:
 .\python_embeded\python.exe -c "import os; print(repr(os.environ.get('OPENCLAW_LLM_ALLOWED_HOSTS')))"
 ```
 
-If you intentionally accept the risk and enable `OPENCLAW_ALLOW_INSECURE_BASE_URL=1`, restart ComfyUI fully after changing the env vars.
+If you intentionally accept the broader risk and enable `OPENCLAW_ALLOW_INSECURE_BASE_URL=1`, restart ComfyUI fully after changing the env vars.
 
 ## Service Mode (NSSM)
 

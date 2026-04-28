@@ -199,9 +199,9 @@ Newest entries appear first.
 <summary><strong>Private-host LLM SSRF contract clarified across Remote Admin, docs, and deployment guidance</strong></summary>
 
 - Clarified that `OPENCLAW_LLM_ALLOWED_HOSTS` only extends the exact public-host allowlist for custom LLM `base_url` values and does not permit private/reserved LAN targets by itself.
-- Updated Remote Admin and model-refresh SSRF error messages so operators can distinguish public-host allowlisting from the explicit insecure override required for private-IP targets.
+- Updated Remote Admin and model-refresh SSRF error messages so operators can distinguish public-host allowlisting, scoped private-network allowance, and the explicit insecure override for private-IP targets.
 - Documented Windows portable env inheritance expectations, including the need to set variables before launching `python_embeded\python.exe`, restart after changes, and avoid unsupported wildcard entries such as `*`.
-- Fixed request-time parity so Remote Admin validation, `/openclaw/llm/models`, and outbound provider requests now honor the same explicit insecure override for intentional private-host/HTTP LLM targets.
+- Fixed request-time parity so Remote Admin validation, `/openclaw/llm/models`, and outbound provider requests now honor the same scoped private-network allowance or explicit insecure override for intentional private-host/HTTP LLM targets.
 - Added a pre-commit autofix guard that regenerates `docs/openapi.yaml` when OpenAPI contract/generator inputs change, preventing generated-spec drift from surfacing only at push time.
 - Added regression coverage for the clarified SSRF error contract and re-validated with the full SOP gate.
 

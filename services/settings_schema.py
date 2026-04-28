@@ -203,6 +203,13 @@ def _register_defaults() -> None:
             category="llm",
         ),
         SettingDef(
+            key="allow_private_network",
+            type=SettingType.BOOL,
+            default=False,
+            description="Allow the configured LLM base URL to resolve to private networks",
+            category="llm",
+        ),
+        SettingDef(
             key="timeout_sec",
             type=SettingType.INT,
             default=120,

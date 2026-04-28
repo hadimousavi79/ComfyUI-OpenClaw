@@ -114,7 +114,7 @@ class TestR155ExceptionFidelity(unittest.TestCase):
             )
 
         self._assert_traceback_contains_frame(
-            tb, "api/config.py", 490, "models = fetch_remote_model_list("
+            tb, "api/config.py", 494, "models = fetch_remote_model_list("
         )
 
     def _run_async(self, coro):

@@ -22,6 +22,7 @@ Users should audit these flags before deploying to a public or untrusted network
 | `OPENCLAW_ALLOW_REMOTE_ADMIN` | `0` | **High** | Be careful! Allows admin actions from non-loopback IPs if token is present (including writes from `/openclaw/admin` remote console). Default is loopback-only for admin. |
 | `OPENCLAW_BRIDGE_ENABLED` | `0` | **High** | Enables the sidecar bridge for remote orchestration. Requires `OPENCLAW_BRIDGE_DEVICE_TOKEN` (and in public posture also mTLS + device allowlist controls). |
 | `OPENCLAW_ALLOW_ANY_PUBLIC_LLM_HOST` | `0` | **High** | Bypasses the known-host allowlist for LLM `base_url`. Allows SSRF to public IPs. |
+| `OPENCLAW_LLM_ALLOW_PRIVATE_NETWORK` | `0` | **High** | Allows the configured LLM `base_url` host to resolve to private/reserved IPs while preserving exact-host scope and DNS pinning. |
 | `OPENCLAW_ALLOW_INSECURE_BASE_URL` | `0` | **Critical** | Allows HTTP (non-HTTPS) or private IP `base_url` for LLM. Risk of internal network scanning (SSRF). |
 | `OPENCLAW_MULTI_TENANT_ENABLED` | `0` | **High** | Enables fail-closed tenant boundary mode. Requests without valid tenant context can be rejected by design. |
 | `OPENCLAW_TENANT_HEADER` | `X-OpenClaw-Tenant-Id` | **Low** | Customizes tenant header extraction key for multi-tenant mode. Keep stable across all clients/proxies. |

@@ -357,7 +357,7 @@ async def llm_models_handler(request: web.Request) -> web.Response:
     Security:
     - admin boundary
     - loopback-only unless OPENCLAW_ALLOW_REMOTE_ADMIN=1
-    - SSRF policy enforced via OPENCLAW_LLM_ALLOWED_HOSTS / OPENCLAW_ALLOW_ANY_PUBLIC_LLM_HOST
+    - SSRF policy enforced via LLM egress controls, including scoped private-network allowance
     """
     if web is None:
         raise RuntimeError("aiohttp not available")
@@ -468,7 +468,11 @@ async def llm_models_handler(request: web.Request) -> web.Response:
 
             # SSRF policy
             try:
-                controls = get_llm_egress_controls(target.provider, target.base_url)
+                controls = get_llm_egress_controls(
+                    target.provider,
+                    target.base_url,
+                    allow_private_network=target.allow_private_network,
+                )
                 validate_model_list_target(
                     target,
                     controls,

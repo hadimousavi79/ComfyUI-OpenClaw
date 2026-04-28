@@ -361,6 +361,7 @@ def _open_outbound_response(
     allow_any_public_host: bool = False,
     allow_loopback_hosts: Optional[Set[str]] = None,
     allow_insecure_base_url: bool = False,
+    allow_private_network: bool = False,
     headers: Optional[dict] = None,
     content_type: Optional[str] = None,
     timeout_sec: int = 10,
@@ -390,6 +391,7 @@ def _open_outbound_response(
             allow_any_public_host=allow_any_public_host,
             allow_loopback_hosts=allow_loopback_hosts,
             allow_insecure_base_url=allow_insecure_base_url,
+            allow_private_network=allow_private_network,
             policy=policy,
         )
 
@@ -555,6 +557,7 @@ def validate_outbound_url(
     allow_any_public_host: bool = False,
     allow_loopback_hosts: Optional[Set[str]] = None,
     allow_insecure_base_url: bool = False,
+    allow_private_network: bool = False,
     policy: Optional[OutboundPolicy] = None,
 ) -> Tuple[str, str, int, list[str]]:
     """
@@ -569,6 +572,9 @@ def validate_outbound_url(
         allow_insecure_base_url: Explicit risk-acceptance override for LLM-only
             paths. Keeps URL syntax checks and IP pinning, but skips strict
             allowlist/scheme/private-IP blocking.
+        allow_private_network: Scoped LLM-only exception for the already-allowlisted
+            target host. Keeps scheme/port policy, exact-host allowlists, and DNS
+            pinning while allowing private/reserved resolved IPs for that host.
         policy: S51 OutboundPolicy for scheme+port enforcement.
 
     Returns:
@@ -617,15 +623,21 @@ def validate_outbound_url(
     normalized_loopback_allowlist = {
         _normalize_host(h) for h in (allow_loopback_hosts or set())
     }
+    normalized_allowlist = {_normalize_host(h) for h in (allow_hosts or set())}
+    allow_scoped_private_network = (
+        allow_private_network and normalized_host in normalized_allowlist
+    )
 
     # Check allowlist if provided or enforced
     if not allow_insecure_base_url and not allow_any_public_host:
         if allow_hosts is None:
             raise SSRFError("No allow_hosts allowed")
 
-        normalized_allowlist = {_normalize_host(h) for h in allow_hosts}
         if normalized_host not in normalized_allowlist:
             raise SSRFError(f"Host not in allowlist: {host}")
+
+    if allow_private_network and not allow_scoped_private_network:
+        raise SSRFError("Private-network allowance requires exact host allowlist")
 
     # DNS resolution + IP check
     resolved_ips = []
@@ -635,7 +647,11 @@ def validate_outbound_url(
         )
         for _, _, _, _, sockaddr in addr_infos:
             ip = sockaddr[0]
-            if is_private_ip(ip) and not allow_insecure_base_url:
+            if (
+                is_private_ip(ip)
+                and not allow_insecure_base_url
+                and not allow_scoped_private_network
+            ):
                 # CRITICAL:
                 # Only allow loopback IPs when the target host is explicitly listed in
                 # allow_loopback_hosts. Never relax this into blanket private-IP allow.
@@ -780,6 +796,7 @@ def safe_request_json(
     allow_any_public_host: bool = False,
     allow_loopback_hosts: Optional[Set[str]] = None,
     allow_insecure_base_url: bool = False,
+    allow_private_network: bool = False,
     headers: Optional[dict] = None,
     content_type: str = "application/json",
     timeout_sec: int = 10,
@@ -805,6 +822,7 @@ def safe_request_json(
         allow_any_public_host=allow_any_public_host,
         allow_loopback_hosts=allow_loopback_hosts,
         allow_insecure_base_url=allow_insecure_base_url,
+        allow_private_network=allow_private_network,
         headers=headers,
         content_type=content_type,
         timeout_sec=timeout_sec,
@@ -833,6 +851,7 @@ def safe_request_text_stream(
     allow_any_public_host: bool = False,
     allow_loopback_hosts: Optional[Set[str]] = None,
     allow_insecure_base_url: bool = False,
+    allow_private_network: bool = False,
     headers: Optional[dict] = None,
     timeout_sec: int = 10,
     max_line_bytes: int = 64 * 1024,
@@ -855,6 +874,7 @@ def safe_request_text_stream(
         allow_any_public_host=allow_any_public_host,
         allow_loopback_hosts=allow_loopback_hosts,
         allow_insecure_base_url=allow_insecure_base_url,
+        allow_private_network=allow_private_network,
         headers=headers,
         content_type="application/json",
         timeout_sec=timeout_sec,

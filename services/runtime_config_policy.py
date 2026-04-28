@@ -112,6 +112,7 @@ ALLOWED_LLM_KEYS = {
     "provider",
     "model",
     "base_url",
+    "allow_private_network",
     "timeout_sec",
     "max_retries",
     "fallback_models",
@@ -132,6 +133,7 @@ DEFAULTS = {
         "provider": "openai",
         "model": "gpt-4o-mini",
         "base_url": "",
+        "allow_private_network": False,
         "timeout_sec": 120,
         "max_retries": 3,
         "fallback_models": [],
@@ -208,7 +210,17 @@ def get_env_value(
     return value
 
 
-def get_llm_egress_controls(provider: str, base_url: str) -> Dict[str, Any]:
+def _coerce_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in ("1", "true", "yes", "on", "y")
+    return bool(value)
+
+
+def get_llm_egress_controls(
+    provider: str, base_url: str, *, allow_private_network: bool = False
+) -> Dict[str, Any]:
     """
     Build canonical outbound SSRF controls for LLM egress paths.
 
@@ -241,6 +253,11 @@ def get_llm_egress_controls(provider: str, base_url: str) -> Dict[str, Any]:
     except Exception:
         host = ""
 
+    # CRITICAL: scoped private-network access is exact-host only. Do not widen
+    # this into CIDR or wildcard allowlists, or LLM base URLs can bypass SSRF scope.
+    if allow_private_network and host:
+        allowed_hosts.add(host)
+
     # CRITICAL: local providers may use loopback only. Never widen this to
     # blanket private IPs or SSRF protections regress.
     if host and is_local_provider(provider):
@@ -250,9 +267,12 @@ def get_llm_egress_controls(provider: str, base_url: str) -> Dict[str, Any]:
             allowed_hosts |= loopback_aliases
 
     return {
-        "allow_hosts": None if allow_any else allowed_hosts,
+        "allow_hosts": (
+            None if allow_any and not allow_private_network else allowed_hosts
+        ),
         "allow_any_public_host": allow_any,
         "allow_loopback_hosts": allow_loopback_hosts,
+        "allow_private_network": bool(allow_private_network),
     }
 
 
@@ -290,6 +310,9 @@ def get_scheduler_config() -> Dict[str, Any]:
 
 def normalize_llm_layer_value(key: str, value: Any, source: str) -> Any:
     if source == SOURCE_ENV:
+        if key == "allow_private_network":
+            return _coerce_bool(value)
+
         if key in ("fallback_models", "fallback_providers"):
             if isinstance(value, str):
                 return [item.strip() for item in value.split(",") if item.strip()]
@@ -310,6 +333,8 @@ def normalize_llm_layer_value(key: str, value: Any, source: str) -> Any:
     if key in CONSTRAINTS and isinstance(value, (int, float)):
         min_val, max_val = get_constraint_range(key)
         return _clamp(int(value), min_val, max_val)
+    if key == "allow_private_network":
+        return _coerce_bool(value)
     return value
 
 
@@ -375,9 +400,18 @@ def validate_config_update(
                     )
                     continue
 
-                controls = get_llm_egress_controls(provider_key, value)
-                if is_local_provider(provider_key) and not controls.get(
-                    "allow_loopback_hosts"
+                allow_private_network = bool(
+                    coerced.get("allow_private_network", False)
+                )
+                controls = get_llm_egress_controls(
+                    provider_key,
+                    value,
+                    allow_private_network=allow_private_network,
+                )
+                if (
+                    is_local_provider(provider_key)
+                    and not controls.get("allow_loopback_hosts")
+                    and not controls.get("allow_private_network")
                 ):
                     errors.append(
                         f"Local provider {provider_key} must use localhost URL"
@@ -399,6 +433,9 @@ def validate_config_update(
                             controls.get("allow_any_public_host")
                         ),
                         allow_loopback_hosts=controls.get("allow_loopback_hosts"),
+                        allow_private_network=bool(
+                            controls.get("allow_private_network")
+                        ),
                         policy=STANDARD_OUTBOUND_POLICY,
                     )
                 except ssrf_error_type as exc:
@@ -412,7 +449,8 @@ def validate_config_update(
                             f"{exc}. OPENCLAW_LLM_ALLOWED_HOSTS "
                             "(or legacy MOLTBOT_LLM_ALLOWED_HOSTS) only allows "
                             "additional exact public hosts; private/reserved IP "
-                            "targets still require "
+                            "targets still require scoped allow_private_network=true "
+                            "for the configured LLM target or "
                             "OPENCLAW_ALLOW_INSECURE_BASE_URL=1. Wildcard '*' "
                             "entries are not supported."
                         )
