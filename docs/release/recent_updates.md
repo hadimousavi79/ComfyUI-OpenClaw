@@ -7,6 +7,16 @@ Newest entries appear first.
 
 <details>
 
+<summary><strong>Startup lifecycle diagnostics, connector SecretRef service boundaries, and internal prompt isolation aligned with the current runtime</strong></summary>
+
+- Health diagnostics now distinguish required startup readiness, optional warmup degradation, and fatal startup failures; optional warmups run after route registration and no longer block baseline API availability.
+- Connector/service launch planning now has a secret-blind env-backed SecretRef boundary that preserves supported connector credential references without expanding raw token values, while rejecting raw secrets, legacy marker strings, unsupported envs, and runtime-only auth tokens.
+- Operator-visible and audit payload sanitization now removes explicitly marked internal maintenance/helper prompt content before normal reasoning redaction, while leaving ordinary user text intact.
+
+</details>
+
+<details>
+
 <summary><strong>Host compatibility anchors and inactive-branch preflight diagnostics aligned with current ComfyUI hosts</strong></summary>
 
 - Refreshed the published compatibility matrix for current ComfyUI, standalone frontend, and desktop reference anchors, keeping desktop embedded-frontend lag explicit instead of assuming standalone-frontend parity.

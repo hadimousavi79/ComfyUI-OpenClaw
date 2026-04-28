@@ -45,6 +45,7 @@ Admin diagnostics APIs:
 Extraction diagnostics note:
 
 - `/openclaw/connector/extraction-contract` is an admin-only structural metadata route for maintainers and operators. It returns the current packaging recommendation, candidate extraction options, seam families, and blockers, but it does **not** expose live token or installation-state details beyond the existing diagnostics routes above.
+- The extraction contract also includes the static service-env SecretRef propagation policy. It is not a live environment dump and does not expose token values.
 
 Slack multi-workspace notes:
 

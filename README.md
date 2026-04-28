@@ -70,7 +70,7 @@ This project is designed to make **ComfyUI a reliable automation target** with a
 - Secret handling stays server-side: browser storage is not used for secrets, local secret-manager integration is opt-in, and secrets-at-rest / token lifecycle controls are treated as operational boundaries.
 - Multi-tenant mode is isolation-first: tenant mismatches fail closed across config, secret sources, connector installations, approvals, visibility, and execution budgets.
 - Connector multi-workspace and multi-account bindings are secret-ref-only and fail-closed by design, so tenant/binding mismatches degrade to explicit rejection paths instead of silently reusing the wrong installation context.
-- Operator-facing payloads default to redaction for provider reasoning-like content, while audit trails, diagnostics, and runtime guardrails remain explicit and tamper-evident.
+- Operator-facing and audit payloads default to redaction for provider reasoning-like content and explicitly marked internal maintenance/helper prompt material, while diagnostics and runtime guardrails remain explicit and tamper-evident.
 - Verification is part of the security model: route drift checks, coverage governance, adversarial gates, and doctor/compatibility diagnostics are all wired into CI-parity workflows.
 
 Deployment profiles and hardening references:
@@ -79,13 +79,23 @@ Deployment profiles and hardening references:
 - [Security Checklist](docs/security_checklist.md)
 - [Runtime Hardening and Startup](docs/runtime_hardening_and_startup.md)
 - [Threat Model](docs/release/threat_model.md)
-- [R69 Frontend Migration Decision](docs/r69_ui_framework_migration_decision.md)
+- [Frontend Migration Decision](docs/r69_ui_framework_migration_decision.md)
 
 </details>
 
 
 
 <details><summary><h2>Latest Updates - Click to expand</h2></summary>
+
+<details>
+
+<summary><strong>Startup lifecycle diagnostics, connector SecretRef service boundaries, and internal prompt isolation aligned with the current runtime</strong></summary>
+
+- Health diagnostics now distinguish required startup readiness, optional warmup degradation, and fatal startup failures; optional warmups run after route registration and no longer block baseline API availability.
+- Connector/service launch planning now has a secret-blind env-backed SecretRef boundary that preserves supported connector credential references without expanding raw token values, while rejecting raw secrets, legacy marker strings, unsupported envs, and runtime-only auth tokens.
+- Operator-visible and audit payload sanitization now removes explicitly marked internal maintenance/helper prompt content before normal reasoning redaction, while leaving ordinary user text intact.
+
+</details>
 
 <details>
 
@@ -131,17 +141,6 @@ Deployment profiles and hardening references:
 - Added fail-closed test-debt governance for no-skip modules and mutation-survivor allowlist entries, with explicit `reason` and `review_after` metadata now enforced by the standard full-test flow.
 - Hardened pack metadata/version fallback parsing and made config/bootstrap imports side-effect-safe, so pack version fallback stays deterministic and importing config helpers no longer creates the state directory or log file before first real use.
 - Added bounded connector numeric env parsing for delivery, media, timeout, rate-limit, command-length, OAuth TTL, and bind-port settings, so malformed values degrade to documented defaults or clamps with warnings instead of crashing startup.
-
-</details>
-
-<details>
-
-<summary><strong>Output contract, outbound egress handling, Security Doctor structure, and audit verification tooling aligned with the current runtime</strong></summary>
-
-- Kept `/history` + `/view` as the supported runtime output contract for current operator flows, and made asset-service-only refs stay explicit as a bounded fallback state instead of silently guessing a direct `/api/assets` fetch path.
-- Consolidated outbound safe HTTP execution behind one shared `safe_io` executor seam so local-provider checks, connector callbacks, and redirect handling now follow the same SSRF-safe validation, pinning, and redirect re-check rules.
-- Split Security Doctor internals into focused endpoint, runtime, connector, report, and remediation modules while keeping the operator-facing doctor API and remediation workflow unchanged.
-- Added retained audit-chain verification tooling, including a persisted `audit.log.key` sidecar when no environment key is provided, so operators can verify the current audit log plus retained rotations after restart or log rotation.
 
 </details>
 
@@ -212,7 +211,7 @@ Notes:
 
 - Recommended: set API keys via environment variables.
 - Optional: for single-user localhost setups, you can store a provider API key from the Settings tab (UI Key Store (Advanced)).
-  - This writes to the server-side secret store (`{STATE_DIR}/secrets.json`).
+  - This writes to the encrypted server-side secret store (`{STATE_DIR}/secrets.enc.json`).
   - Environment variables always take priority over stored keys.
 - Built-in local-provider defaults use loopback-only OpenAI-compatible URLs:
   - `Ollama (Local)` -> `http://127.0.0.1:11434/v1`
@@ -469,7 +468,7 @@ Main API families:
 - Observability: health, capabilities, logs, traces, event feeds
 - Admin diagnostics: preflight inventory snapshot/status, doctor-facing readiness views
 - Config + LLM: effective config, provider tests, model lists, assist planner/refiner
-- Connector diagnostics: installation state, resolution, callback/tenant binding evidence, audit views, and extraction seam metadata
+- Connector diagnostics: installation state, resolution, callback/tenant binding evidence, audit views, extraction seam metadata, and static service-env SecretRef propagation policy
 - Webhooks + events: validate, submit, callback delivery, SSE/polling status
 - Admin operations: approvals, schedules, presets, rewrite recipes
 - Model Manager + Packs: search, download/import lifecycle, pack import/export
@@ -485,10 +484,10 @@ Primary references:
 
 Key operational notes:
 
-- Observability remains token-gated for remote access and redacts provider reasoning-like content by default.
+- Observability remains token-gated for remote access and redacts provider reasoning-like content plus marked internal maintenance/helper content by default.
 - Event/model-download polling and preflight inventory are snapshot/cursor-driven contracts; clients should consume `snapshot_ts`, `scan_state`, `stale`, and cursor metadata instead of assuming full-refresh polling.
 - Output/history-facing consumers should keep using the bounded `/history` + `/view` contract; refs that only upstream asset services can resolve remain explicit `asset_api_required` compatibility states.
-- Connector diagnostics expose redacted token references only, and `/openclaw/connector/extraction-contract` is structural packaging metadata rather than a live installation-health feed.
+- Connector diagnostics expose redacted token references only, and `/openclaw/connector/extraction-contract` is structural packaging metadata and static SecretRef policy rather than a live installation-health, environment, or token-status feed.
 
 ## Advanced Security and Runtime Setup
 
@@ -676,7 +675,10 @@ The connector currently remains an **optional attached subsystem inside this rep
 - **Slack multi-workspace and interactive mode**: Workspace installs can be handled through connector-managed OAuth install/callback routes with per-workspace token binding, fail-closed health diagnostics, and signed interactive callback handling for action payloads.
 - **Feishu/Lark multi-account mode**: Connector-managed account/workspace bindings support tenant-aware installation resolution, interactive approval cards, and signed callback handling without exposing raw app secrets or widening command trust implicitly.
 - **Bounded connector numeric envs**: Delivery/media/time-budget settings, bind ports, rate limits, and command-length knobs now clamp or fall back to documented defaults with warnings instead of crashing connector startup on malformed values.
-- **Packaging diagnostics**: Admin operators/maintainers can inspect `/openclaw/connector/extraction-contract` for the current in-repo recommendation plus the minimum seam families required before any future split.
+- **Startup diagnostics**: `/openclaw/health` reports startup readiness, optional warmup degradation, and fatal startup details without making optional warmups block baseline API availability.
+- **SecretRef service boundaries**: Connector service-env planning preserves only supported env-backed credential references and rejects raw secrets, legacy marker strings, unsupported envs, and runtime-only auth tokens.
+- **Internal prompt isolation**: Operator-visible and audit payloads remove explicitly marked internal maintenance/helper prompt content before normal reasoning redaction.
+- **Packaging diagnostics**: Admin operators/maintainers can inspect `/openclaw/connector/extraction-contract` for the current in-repo recommendation, the static service-env SecretRef propagation policy, and the minimum seam families required before any future split.
 
 - [See Setup Guide (`docs/connector.md`)](docs/connector.md)
 

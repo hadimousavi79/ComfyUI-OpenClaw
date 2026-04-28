@@ -18,7 +18,7 @@ Operators should use this to understand the risks of deployment.
 * **Access**: Read-only logs (`/openclaw/logs/tail`), config (`/openclaw/config`), health.
 * **Mechanism**: `OPENCLAW_OBSERVABILITY_TOKEN`.
 * **Redaction**: Logs/Config are redacted by default to prevent secret leakage.
-* **Reasoning-content posture**: provider reasoning / thinking traces are stripped by default from operator-visible assist responses, event streams, trace responses, callback payloads, and connector trace replies; privileged reveal is local-debug only, admin-gated, auditable, and fail-closed outside permissive local posture.
+* **Reasoning/internal-content posture**: provider reasoning / thinking traces and explicitly marked internal maintenance/helper prompt content are stripped by default from operator-visible assist responses, event streams, trace responses, callback payloads, connector trace replies, and audit event payload/meta fields. Privileged reasoning reveal is local-debug only, admin-gated, auditable, and fail-closed outside permissive local posture; internal maintenance/helper prompt content has no public or debug reveal path.
 
 ### 3. The "Connector" Boundary (ChatOps)
 
@@ -50,7 +50,7 @@ Operators should use this to understand the risks of deployment.
   * *Mitigation*: Known-host allowlist by default. Custom URLs need explicit opt-in + DNS validation.
 * **Callback Delivery**: `POST` results to webhook targets.
   * *Risk*: SSRF / Information Leakage.
-  * *Mitigation*: DNS-safe validation (no private IPs) + operator-payload redaction, including reasoning-content stripping by default.
+  * *Mitigation*: DNS-safe validation (no private IPs) + operator-payload redaction, including reasoning/internal-content stripping by default.
 * **Image Fetching**: `image_url` inputs.
   * *Mitigation*: SafeIO module (size limits, no file://).
 

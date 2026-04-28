@@ -2,9 +2,9 @@
 
 ## Quick Links
 
-- Deployment profiles and checklists: [Security Deployment Guide](docs/security_deployment_guide.md)
-- Runtime startup hardening behavior: [Runtime Hardening and Startup](docs/runtime_hardening_and_startup.md)
-- Pre-exposure checklist: [Security Checklist](docs/security_checklist.md)
+- Deployment profiles and checklists: [Security Deployment Guide](security_deployment_guide.md)
+- Runtime startup hardening behavior: [Runtime Hardening and Startup](runtime_hardening_and_startup.md)
+- Pre-exposure checklist: [Security Checklist](security_checklist.md)
 - Deployment self-check command:
   - `python scripts/check_deployment_profile.py --profile local|lan|public`
 
@@ -21,7 +21,7 @@ Only the latest version of ComfyUI-OpenClaw is supported for security updates.
 
 Please report security vulnerabilities by creating a **private** issue on GitHub if possible, or contact the maintainers directly. Do not open public issues for sensitive security flaws.
 
-### Disclosure Workflow and SLA (S48)
+### Disclosure Workflow and SLA
 
 Private reporting workflow:
 1. Submit a private report with repro steps, affected version, and impact.
@@ -103,15 +103,20 @@ export OPENCLAW_ADMIN_TOKEN="your-secure-random-admin-token-here"
 
 Then configure your proxy or client to send the header `X-OpenClaw-Obs-Token: your-secure-random-token-here` (legacy: `X-Moltbot-Obs-Token`).
 
-### 1.1 Reasoning Debug Reveal Boundary (Local-only)
+### 1.1 Reasoning and Internal Content Redaction Boundary
 
-Operator-facing payloads strip provider reasoning / thinking traces by default across:
+Operator-facing payloads strip provider reasoning / thinking traces and explicitly marked internal maintenance/helper prompt content by default across:
 
 - assist responses
 - event / SSE payloads
 - trace responses
 - callback payloads
 - connector trace/debug replies
+- audit event payload/meta fields
+
+Internal maintenance/helper prompt content has no public or debug reveal path. Privileged reasoning reveal is limited to provider reasoning / thinking traces only.
+
+### 1.2 Reasoning Debug Reveal Boundary (Local-only)
 
 There is a privileged local-debug reveal path for troubleshooting, but it is fail-closed unless **all** of the following are true:
 
@@ -142,7 +147,7 @@ export OPENCLAW_TRUSTED_PROXIES="127.0.0.1,10.0.0.0/8"
 # export MOLTBOT_TRUSTED_PROXIES="127.0.0.1,10.0.0.0/8"
 ```
 
-### 3. Public Profile Boundary Acknowledgement (S69)
+### 3. Public Profile Boundary Acknowledgement
 
 For public profile deployments, you must explicitly acknowledge that reverse-proxy path controls and network ACL boundaries are already enforced:
 
@@ -220,7 +225,7 @@ Operational note:
 
 - this path remains backend-only; frontend surfaces stay secret-blind.
 
-### 5. Startup Gate Behavior (R136 + S56)
+### 5. Startup Gate Behavior
 
 Startup security gates are fail-closed. Fatal startup gate/bootstrap failures abort route/worker registration and do not continue in a partial state.
 
@@ -283,7 +288,7 @@ OpenClaw enforces internal rate limits:
 
 ### 8. Sidecar Bridge
 
-OpenClaw supports a "Sidecar Bridge" (F10) for safe interaction with external bots (Discord/Slack).
+OpenClaw supports a "Sidecar Bridge" for safe interaction with external bots (Discord/Slack).
 
 * **Default**: **DISABLED**.
 * **Enable**: Set `OPENCLAW_BRIDGE_ENABLED=1` (legacy `MOLTBOT_BRIDGE_ENABLED=1`).

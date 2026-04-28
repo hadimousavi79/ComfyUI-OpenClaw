@@ -1,12 +1,12 @@
 # OpenClaw API Contract (v1)
 
 > **Status**: normative
-> **Version**: 1.0.8
-> **Date**: 2026-04-26
+> **Version**: 1.0.9
+> **Date**: 2026-04-28
 
 This document defines the public API contract for OpenClaw. It serves as the authoritative baseline for client compatibility and breaking change policies.
 
-## 0. Tenant Boundary Context (S49)
+## 0. Tenant Boundary Context
 
 Default behavior remains single-tenant compatible (`tenant_id=default`).
 
@@ -51,7 +51,8 @@ All new integrations should use the `/openclaw/` prefix. Use of `/moltbot/` is d
 
 Reasoning-content redaction contract:
 
-- operator-visible trace and events payloads strip provider reasoning / thinking-like fields by default
+- operator-visible trace and events payloads strip provider reasoning / thinking-like fields and explicitly marked internal maintenance/helper content by default
+- audit event payload/meta fields follow the same internal-content and reasoning-like redaction boundary before retention
 - privileged reveal is opt-in only and requires:
   - request header `X-OpenClaw-Debug-Reveal-Reasoning: 1` or query `debug_reasoning=1`
   - server-side enablement via `OPENCLAW_DEBUG_REASONING_REVEAL=1`
@@ -60,6 +61,7 @@ Reasoning-content redaction contract:
   - non-hardened runtime profile
   - deployment profile `local` or `lan`
 - clients MUST treat reveal behavior as debug-only and MUST NOT depend on reasoning payload presence in normal operation
+- explicitly marked internal maintenance/helper content has no public or debug reveal path
 
 Inventory diagnostics contract:
 
@@ -98,8 +100,9 @@ Preflight workflow diagnostics contract:
 
 Assist payload redaction contract:
 
-- structured assist responses preserve final operator-visible answer fields but strip provider reasoning / chain-of-thought style fields by default
+- structured assist responses preserve final operator-visible answer fields but strip provider reasoning / chain-of-thought style fields and explicitly marked internal maintenance/helper content by default
 - when the privileged reveal gate is allowed, debug reasoning is exposed only in a separate debug payload and not merged back into the normal structured answer fields
+- explicitly marked internal maintenance/helper content is not exposed by the privileged reasoning reveal gate
 
 ### 1.3B Connector Installation Diagnostics
 
@@ -112,13 +115,13 @@ Assist payload redaction contract:
 | `GET` | `/connector/installations/{installation_id}` | `/moltbot/connector/installations/{installation_id}` | Admin | Get one redacted connector installation record. |
 | `GET` | `/connector/installations/resolve` | `/moltbot/connector/installations/resolve` | Admin | Run fail-closed workspace resolution diagnostics (`platform`, `workspace_id`). |
 | `GET` | `/connector/installations/audit` | `/moltbot/connector/installations/audit` | Admin | List installation lifecycle audit evidence (redacted). |
-| `GET` | `/connector/extraction-contract` | `/moltbot/connector/extraction-contract` | Admin | Get the machine-readable connector extraction recommendation, seam families, and current blockers. |
+| `GET` | `/connector/extraction-contract` | `/moltbot/connector/extraction-contract` | Admin | Get the machine-readable connector extraction recommendation, seam families, static service-env SecretRef propagation policy, and current blockers. |
 
 Connector diagnostics contract notes:
 - installation records may expose operator-safe health metadata under `installation.metadata.health` (for example `ok`, `invalid_token`, `revoked`, `degraded`) without exposing token material
 - `/connector/installations` diagnostics may include aggregate `health_counts` in addition to lifecycle `status_counts`
 - `/connector/installations/resolve` may expose a stable `health_code` alongside the legacy `reject_reason` so clients can distinguish `workspace_unbound` vs token-health failures without parsing status text
-- `/connector/extraction-contract` is structural packaging metadata only; clients MUST NOT treat it as a live installation-health or token-status feed
+- `/connector/extraction-contract` is structural packaging metadata and static service-env SecretRef policy only; clients MUST NOT treat it as a live installation-health, live environment dump, or token-status feed
 
 ### 1.3C Model Management & Installations
 
@@ -260,7 +263,7 @@ Tenant-boundary error notes:
   - `error`
   - `keepalive`
 - Clients MUST treat `final` as the source of truth for structured assist results. `delta` preview text is best-effort and may be truncated or differ from the final parsed payload.
-- Event-stream and polling payloads redact provider reasoning / thinking traces by default; reveal is debug-only and gated by the same privileged local-debug contract used by trace/assist surfaces.
+- Event-stream and polling payloads redact provider reasoning / thinking traces and explicitly marked internal maintenance/helper content by default; reasoning reveal is debug-only and gated by the same privileged local-debug contract used by trace/assist surfaces.
 - Clients SHOULD gracefully fall back to non-streaming assist endpoints when streaming capability is absent or streaming transport fails.
 
 ### 2.4 Pagination & Scan Diagnostics (Management Query Contract)

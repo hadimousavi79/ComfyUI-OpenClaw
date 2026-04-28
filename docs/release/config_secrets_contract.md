@@ -31,7 +31,7 @@ Controls the core LLM client used by nodes (Planner, Refiner, etc.).
 | `OPENCLAW_LLM_BASE_URL` | No | Provider default | Override base URL (crucial for local/compatible providers). |
 | `OPENCLAW_LLM_TIMEOUT`| No | `120` | Request timeout in seconds. |
 
-Optional local secret-manager path (S11, disabled by default):
+Optional local secret-manager path (disabled by default):
 
 | Variable | Required | Default | Description |
 | :--- | :--- | :--- | :--- |
@@ -167,6 +167,7 @@ Connector posture rules:
 - Public deployment profile check surfaces this as `DP-PUBLIC-009`.
 - Slack multi-workspace installs persist only encrypted token refs in `connector_installations.json`; raw bot/app tokens remain in encrypted secret storage and must not appear in diagnostics or exported config surfaces.
 - Feishu/Lark bindings persist normalized installation identity plus secret references only; app secrets and callback signing material must stay in encrypted/local secret storage and must not appear in diagnostics or exported config surfaces.
+- Connector service-env propagation preserves only structured env-backed SecretRef metadata for supported connector credential variables. It reports secret-blind status/reason fields and rejects raw secrets, legacy marker strings, unsupported env names, missing envs, and runtime-only auth tokens such as admin, worker, and bridge tokens. Raw token values must not be written into diagnostics or service metadata.
 - Connector bind-port envs (`OPENCLAW_CONNECTOR_LINE_PORT`, `...WHATSAPP_PORT`, `...WECHAT_PORT`, `...KAKAO_PORT`, `...SLACK_PORT`, `...FEISHU_PORT`) must stay within `1..65535`; invalid or out-of-range values fall back to the documented platform defaults instead of crashing startup.
 
 **Delivery & Media:**
