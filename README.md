@@ -670,6 +670,7 @@ The connector currently remains an **optional attached subsystem inside this rep
 - **Run Jobs**: Submit templates via chat commands.
 - **Approvals**: Approve/Reject paused workflows from your phone.
 - **Secure**: Outbound-only for Telegram/Discord. LINE/WhatsApp/WeChat/KakaoTalk/Slack require inbound HTTPS (webhook), while Slack can also use Socket Mode and Feishu can run in either webhook or long-connection mode with a dedicated callback ingress path.
+- **Telegram topics**: Forum topic commands keep their topic context for immediate replies and delayed result delivery.
 - **WeChat encrypted mode**: Official Account encrypted webhook mode is supported when AES settings are configured.
 - **KakaoTalk response safety**: QuickReply limits and safe fallback handling are enforced for reliable payload behavior.
 - **Slack multi-workspace and interactive mode**: Workspace installs can be handled through connector-managed OAuth install/callback routes with per-workspace token binding, fail-closed health diagnostics, and signed interactive callback handling for action payloads.

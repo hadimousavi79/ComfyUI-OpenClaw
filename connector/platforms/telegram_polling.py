@@ -5,6 +5,7 @@ Long-polling implementation for Telegram Bot API.
 
 import asyncio
 import logging
+import re
 import time
 from typing import Optional
 
@@ -14,6 +15,7 @@ from ..router import CommandRouter
 from ..state import ConnectorState
 
 logger = logging.getLogger(__name__)
+_THREAD_ID_RE = re.compile(r"^\d{1,10}$")
 
 
 def _import_aiohttp():
@@ -22,6 +24,21 @@ def _import_aiohttp():
     except ModuleNotFoundError:
         return None
     return aiohttp
+
+
+def _normalize_message_thread_id(value) -> Optional[int]:
+    if value is None or isinstance(value, bool):
+        return None
+    text = str(value).strip()
+    if not _THREAD_ID_RE.fullmatch(text):
+        return None
+    try:
+        thread_id = int(text)
+    except ValueError:
+        return None
+    if thread_id <= 0:
+        return None
+    return thread_id
 
 
 class TelegramPolling:
@@ -125,6 +142,9 @@ class TelegramPolling:
         user_id = from_obj.get("id")
         username = from_obj.get("username") or sender_chat.get("username") or "unknown"
         text = message["text"]
+        message_thread_id = _normalize_message_thread_id(
+            message.get("message_thread_id")
+        )
 
         # Security Check
         is_allowed = False
@@ -149,24 +169,72 @@ class TelegramPolling:
             message_id=str(message["message_id"]),
             text=text,
             timestamp=time.time(),
+            thread_id=str(message_thread_id or ""),
         )
 
         try:
             resp = await self.router.handle(req)
-            await self._send_response(chat_id, resp)
+            await self._send_response(
+                chat_id,
+                resp,
+                delivery_context=(
+                    {"thread_id": req.thread_id} if req.thread_id else None
+                ),
+            )
         except Exception as e:
             logger.exception(f"Error handling command: {e}")
             await self._send_response(
-                chat_id, CommandResponse(text="[Error] Internal processing error.")
+                chat_id,
+                CommandResponse(text="[Error] Internal processing error."),
+                delivery_context=(
+                    {"thread_id": req.thread_id} if req.thread_id else None
+                ),
             )
 
-    async def _send_response(self, chat_id: int, resp: CommandResponse):
+    def _thread_id_from_context(
+        self, delivery_context: Optional[dict]
+    ) -> Optional[int]:
+        context = delivery_context or {}
+        return _normalize_message_thread_id(context.get("thread_id"))
+
+    async def _send_thread_diagnostic(self, chat_id, raw_thread_id) -> None:
+        preview = str(raw_thread_id or "")[:32]
+        logger.warning("Invalid Telegram message_thread_id ignored: %r", preview)
+        if not self.session:
+            return
+        url = f"{self.base_url}/sendMessage"
+        payload = {
+            "chat_id": chat_id,
+            "text": "[OpenClaw] Invalid Telegram thread/topic id; delivery used the parent chat.",
+        }
+        try:
+            async with self.session.post(url, json=payload) as r:
+                if r.status != 200:
+                    logger.error(
+                        f"Failed to send Telegram thread diagnostic: {r.status} {await r.text()}"
+                    )
+        except Exception as e:
+            logger.error(f"Telegram thread diagnostic exception: {e}")
+
+    async def _send_response(
+        self,
+        chat_id: int,
+        resp: CommandResponse,
+        delivery_context: Optional[dict] = None,
+    ):
         url = f"{self.base_url}/sendMessage"
         payload = {
             "chat_id": chat_id,
             # Remediation: Plain text only, no parse_mode
             "text": resp.text,
         }
+        thread_id = self._thread_id_from_context(delivery_context)
+        if thread_id is not None:
+            payload["message_thread_id"] = thread_id
+        elif delivery_context and delivery_context.get("thread_id"):
+            await self._send_thread_diagnostic(
+                chat_id, delivery_context.get("thread_id")
+            )
         try:
             async with self.session.post(url, json=payload) as r:
                 if r.status != 200:
@@ -193,6 +261,13 @@ class TelegramPolling:
         url = f"{self.base_url}/sendPhoto"
         data = aiohttp.FormData()
         data.add_field("chat_id", channel_id)
+        thread_id = self._thread_id_from_context(delivery_context)
+        if thread_id is not None:
+            data.add_field("message_thread_id", str(thread_id))
+        elif delivery_context and delivery_context.get("thread_id"):
+            await self._send_thread_diagnostic(
+                channel_id, delivery_context.get("thread_id")
+            )
         if caption:
             data.add_field("caption", caption)
 
@@ -220,6 +295,13 @@ class TelegramPolling:
         # Using simplified direct call
         url = f"{self.base_url}/sendMessage"
         payload = {"chat_id": channel_id, "text": text}
+        thread_id = self._thread_id_from_context(delivery_context)
+        if thread_id is not None:
+            payload["message_thread_id"] = thread_id
+        elif delivery_context and delivery_context.get("thread_id"):
+            await self._send_thread_diagnostic(
+                channel_id, delivery_context.get("thread_id")
+            )
         try:
             async with self.session.post(url, json=payload) as r:
                 if r.status != 200:

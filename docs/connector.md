@@ -74,7 +74,7 @@ When backend multi-tenant mode is enabled (`OPENCLAW_MULTI_TENANT_ENABLED=1`):
 
 ## Supported Platforms
 
-- **Telegram**: Long-polling (instant response).
+- **Telegram**: Long-polling (instant response), including forum topic reply context.
 - **Discord**: Gateway WebSocket (instant response).
 - **LINE**: Webhook (requires inbound HTTPS).
 - **WhatsApp**: Webhook (requires inbound HTTPS).
@@ -115,6 +115,7 @@ Set the following environment variables (or put them in a `.env` file if you use
 - `OPENCLAW_CONNECTOR_TELEGRAM_TOKEN`: Your Bot Token (from @BotFather).
 - `OPENCLAW_CONNECTOR_TELEGRAM_ALLOWED_USERS`: Comma-separated list of User IDs (e.g. `123456, 789012`).
 - `OPENCLAW_CONNECTOR_TELEGRAM_ALLOWED_CHATS`: Comma-separated list of Chat/Group IDs.
+- Telegram forum topics are preserved when Telegram provides `message_thread_id`; command replies and delayed result delivery are sent back to the same topic. Manually configured delivery contexts must use numeric topic/thread IDs.
 
 **Discord:**
 
