@@ -37,7 +37,7 @@ All new integrations should use the `/openclaw/` prefix. Use of `/moltbot/` is d
 
 | Method | Path | Legacy Path | Auth | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/health` | `/moltbot/health` | None | System status, uptime, and dependencies. |
+| `GET` | `/health` | `/moltbot/health` | None | System status, uptime, dependencies, and startup lifecycle diagnostics. |
 | `GET` | `/capabilities` | `/moltbot/capabilities` | None | Feature flags and supported extensions (includes optional UX/runtime features such as assist streaming support). |
 | `GET` | `/logs/tail` | `/moltbot/logs/tail` | Observability | Tail recent log lines (rate-limited). |
 | `GET` | `/trace/{prompt_id}` | `/moltbot/trace/{id}` | Observability | Get execution trace by prompt ID. |

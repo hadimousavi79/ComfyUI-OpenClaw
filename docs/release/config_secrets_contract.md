@@ -201,6 +201,7 @@ Contractual limits to prevent resource exhaustion.
 | :--- | :--- |
 | `OPENCLAW_STATE_DIR` | Directory for persistent state (DBs, history, logs). Default: `ComfyUI/user/default/openclaw` |
 | `OPENCLAW_LOG_TRUNCATE_ON_START` | Set `1` to truncate active log file (`openclaw.log`) once at process startup before new handlers write records. |
+| `OPENCLAW_STARTUP_WARMUP_TIMEOUT_SEC` | Optional timeout for non-blocking startup warmups. Warmup timeout degrades health diagnostics but does not block required route startup. |
 | `OPENCLAW_DIAGNOSTICS` | Comma-separated list of subsystems to enable debug logging for (e.g. `webhook.*,templates`). Safe-redacted. |
 | `OPENCLAW_CONNECTOR_DEBUG` | Set `1` to enable verbose debug logging in Connector. |
 

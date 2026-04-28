@@ -15,6 +15,56 @@ import time
 _routes_registered = False
 
 
+def _resolve_optional_warmup_timeout_sec() -> float:
+    raw = (
+        os.environ.get("OPENCLAW_STARTUP_WARMUP_TIMEOUT_SEC")
+        or os.environ.get("MOLTBOT_STARTUP_WARMUP_TIMEOUT_SEC")
+        or "5"
+    )
+    try:
+        return max(0.1, min(float(raw), 60.0))
+    except (TypeError, ValueError):
+        return 5.0
+
+
+def _warm_model_inventory_snapshot() -> None:
+    from .preflight import get_model_inventory_snapshot
+
+    get_model_inventory_snapshot(trigger_refresh=True)
+
+
+def _build_optional_startup_warmups():
+    timeout_sec = _resolve_optional_warmup_timeout_sec()
+    return [
+        ("model_inventory", _warm_model_inventory_snapshot, timeout_sec),
+    ]
+
+
+def _mark_startup_ready_and_start_warmups() -> None:
+    try:
+        from .startup_lifecycle import mark_startup_ready, start_optional_warmups
+
+        mark_startup_ready("routes")
+        start_optional_warmups(_build_optional_startup_warmups())
+    except Exception:
+        # IMPORTANT: optional warmup diagnostics must not undo successful route startup.
+        logging.getLogger("ComfyUI-OpenClaw").exception(
+            "R188: failed to start optional startup warmups"
+        )
+
+
+def _mark_startup_fatal(phase: str, exc: BaseException) -> None:
+    try:
+        from .startup_lifecycle import mark_startup_fatal
+
+        mark_startup_fatal(phase, exc)
+    except Exception:
+        # IMPORTANT: preserve the original bootstrap exception even if diagnostics fail.
+        logging.getLogger("ComfyUI-OpenClaw").exception(
+            "R188: failed to record fatal startup state"
+        )
+
+
 def _register_plugins_and_shutdown_hooks() -> None:
     # R67: Best-effort process shutdown hook for scheduler/failover flush.
     try:
@@ -174,6 +224,7 @@ def _do_full_registration(server) -> None:
         require_admin_token_fn=require_admin_token,
         submit_fn=unified_submit_fn,
     )
+    _mark_startup_ready_and_start_warmups()
 
 
 _BRIDGE_ROUTE_SPECS = (
@@ -240,6 +291,12 @@ def _start_registration_retry_loop() -> None:
             attempts += 1
 
         if not _routes_registered:
+            _mark_startup_fatal(
+                "route_registration_retry",
+                RuntimeError(
+                    f"Failed to register routes after {max_attempts} attempts"
+                ),
+            )
             logger.error(
                 "Failed to register routes after %s attempts. API endpoints unavailable.",
                 max_attempts,
@@ -254,8 +311,12 @@ def register_routes_once() -> None:
     if _routes_registered:
         return
 
-    _register_plugins_and_shutdown_hooks()
-    _initialize_registries_and_security_gate()
+    try:
+        _register_plugins_and_shutdown_hooks()
+        _initialize_registries_and_security_gate()
+    except Exception as exc:
+        _mark_startup_fatal("required_startup", exc)
+        raise
 
     try:
         ps_mod = sys.modules.get("server")
@@ -273,6 +334,9 @@ def register_routes_once() -> None:
             )
             _start_registration_retry_loop()
     except Exception:
+        _exc_type, exc, _tb = sys.exc_info()
+        if exc is not None:
+            _mark_startup_fatal("route_registration", exc)
         logging.getLogger("ComfyUI-OpenClaw").exception("Route registration failed")
         # CRITICAL: initial registration failures must fail closed. The retry loop is
         # only for PromptServer warm-up, not for hiding broken route/bootstrap state.

@@ -5,9 +5,9 @@
       "broad_catches": [
         {
           "scope": "health_handler",
-          "expected_count": 5,
+          "expected_count": 6,
           "classification": "allowed_boundary_guard",
-          "reason": "Health diagnostics must degrade to partial snapshots when optional provider, metrics, event-store, or profile probes fail."
+          "reason": "Health diagnostics must degrade to partial snapshots when optional provider, metrics, startup-lifecycle, event-store, or profile probes fail."
         },
         {
           "scope": "logs_tail_handler",
@@ -66,6 +66,18 @@
     "services/route_bootstrap.py": {
       "broad_catches": [
         {
+          "scope": "_mark_startup_ready_and_start_warmups",
+          "expected_count": 1,
+          "classification": "allowed_boundary_guard",
+          "reason": "Optional warmup diagnostics must not block route availability after required startup succeeds."
+        },
+        {
+          "scope": "_mark_startup_fatal",
+          "expected_count": 1,
+          "classification": "allowed_boundary_guard",
+          "reason": "Fatal startup-state recording is diagnostic only and must not mask the original bootstrap exception."
+        },
+        {
           "scope": "_register_plugins_and_shutdown_hooks",
           "expected_count": 1,
           "classification": "needs_follow_up_test_coverage",
@@ -85,9 +97,9 @@
         },
         {
           "scope": "register_routes_once",
-          "expected_count": 1,
+          "expected_count": 2,
           "classification": "allowed_boundary_guard",
-          "reason": "Initial route registration logs context and re-raises so unexpected bootstrap failures are visible and fail-closed."
+          "reason": "Required startup and initial route registration log context and re-raise so unexpected bootstrap failures are visible and fail-closed."
         }
       ]
     }

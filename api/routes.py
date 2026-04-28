@@ -456,6 +456,16 @@ async def health_handler(request: web.Request) -> web.Response:
     except Exception:
         executor_snapshot = {}
 
+    try:
+        if __package__ and "." in __package__:
+            from ..services.startup_lifecycle import get_startup_diagnostics
+        else:
+            from services.startup_lifecycle import get_startup_diagnostics
+
+        startup_diagnostics = get_startup_diagnostics()
+    except Exception:
+        startup_diagnostics = {"state": "unknown", "ready": False, "warmups": {}}
+
     # Job Event Store Stats (Backpressure)
     job_stats = {}
     try:
@@ -507,6 +517,7 @@ async def health_handler(request: web.Request) -> web.Response:
                 "executors": executor_snapshot,  # R129
                 "observability": job_stats,  # R87
             },
+            "startup": startup_diagnostics,
             # S15: Exposure Detection
             "access_policy": {
                 "observability": policy_mode,

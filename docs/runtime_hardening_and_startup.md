@@ -48,6 +48,22 @@ In `minimal` mode, these checks are warning-first for local/LAN posture, but `pu
 Startup bootstrap no longer swallows fatal security-gate errors.
 If a critical startup gate fails, initialization aborts deterministically instead of continuing with partial route registration.
 
+### Startup lifecycle diagnostics
+
+The health response includes a `startup` diagnostic object with:
+
+- `state`: `starting`, `ready`, `degraded-warmup`, or `fatal-startup`
+- `ready`: whether required route/service startup completed
+- `fatal`: bounded fatal-startup details when required startup fails
+- `warmups`: bounded status for optional background warmups
+
+Required startup work still fails closed. Optional warmups such as model inventory refresh run after route registration and do not block baseline API availability. Their failures or timeouts are reported as `degraded-warmup`.
+
+Optional warmup timeout can be tuned with:
+
+- `OPENCLAW_STARTUP_WARMUP_TIMEOUT_SEC`
+- legacy alias: `MOLTBOT_STARTUP_WARMUP_TIMEOUT_SEC`
+
 ## Public deployment shared-surface acknowledgement
 
 When running deployment profile checks for public posture (`OPENCLAW_DEPLOYMENT_PROFILE=public`),

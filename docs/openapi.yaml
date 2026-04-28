@@ -22,7 +22,7 @@ paths:
   /health:
     get:
       operationId: "get_health"
-      summary: "System status, uptime, and dependencies."
+      summary: "System status, uptime, dependencies, and startup lifecycle diagnostics."
       responses:
         200:
           description: "OK"
