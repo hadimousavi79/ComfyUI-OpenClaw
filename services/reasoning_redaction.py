@@ -14,6 +14,7 @@ from typing import Any, Dict, Iterable
 
 from .access_control import is_loopback
 from .audit import emit_audit_event
+from .internal_content import sanitize_internal_content
 from .request_ip import get_client_ip
 from .runtime_profile import get_runtime_profile, is_hardened_mode
 
@@ -99,8 +100,9 @@ def _strip_reasoning(value: Any, *, include_reasoning: bool) -> Any:
 
 
 def sanitize_operator_payload(value: Any, *, include_reasoning: bool = False) -> Any:
-    """Strip reasoning-like fields from operator-visible payloads by default."""
-    cleaned = _strip_reasoning(value, include_reasoning=include_reasoning)
+    """Strip internal and reasoning-like fields from visible payloads by default."""
+    public_value = sanitize_internal_content(value)
+    cleaned = _strip_reasoning(public_value, include_reasoning=include_reasoning)
     if cleaned is _DROP:
         return {}
     return cleaned

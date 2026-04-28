@@ -73,10 +73,13 @@ def build_audit_event(
             from services.redaction import redact_json
 
             redacted_payload = redact_json(payload)
+            from services.reasoning_redaction import sanitize_operator_payload
+
+            public_payload = sanitize_operator_payload(redacted_payload)
 
             # R28: Apply budgets
             budgeted_payload = budget_json(
-                redacted_payload,
+                public_payload,
                 max_bytes=MAX_AUDIT_EVENT_BYTES // 2,  # Reserve half for envelope
                 max_depth=MAX_AUDIT_PAYLOAD_DEPTH,
                 max_items=MAX_AUDIT_LIST_ITEMS,
@@ -89,8 +92,10 @@ def build_audit_event(
 
     # Add meta (small, pre-bounded)
     if meta:
+        from services.reasoning_redaction import sanitize_operator_payload
+
         event["meta"] = budget_json(
-            meta,
+            sanitize_operator_payload(meta),
             max_bytes=512,
             max_depth=4,
             max_items=20,
