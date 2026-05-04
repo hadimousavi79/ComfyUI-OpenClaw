@@ -38,6 +38,7 @@ from urllib.parse import parse_qs
 
 from ..config import ConnectorConfig
 from ..contract import CommandRequest, CommandResponse
+from ..reply_visibility import decide_reply_visibility
 from ..router import CommandRouter
 from ..security_profile import AllowlistPolicy, ReplayGuard
 from .slack_installation_manager import SlackInstallationManager
@@ -52,6 +53,12 @@ logger = logging.getLogger(__name__)
 _SLACK_INTERACTION_TYPES = frozenset(
     {"block_actions", "view_submission", "workflow_step_execute"}
 )
+
+
+def _slack_channel_kind(channel_id: str) -> str:
+    if str(channel_id or "").startswith("D"):
+        return "dm"
+    return "group"
 
 
 # -- aiohttp compat layer (same pattern as kakao/whatsapp/wechat) -----------
@@ -606,6 +613,9 @@ class SlackWebhookServer:
 
         # S67: Require mention in group channels.
         is_dm = channel_id.startswith("D")
+        mentioned_bot = event_type == "app_mention" or (
+            bool(bot_user_id) and f"<@{bot_user_id}>" in text
+        )
         if not is_dm and self.config.slack_require_mention:
             if event_type != "app_mention":
                 if bot_user_id and f"<@{bot_user_id}>" not in text:
@@ -658,6 +668,8 @@ class SlackWebhookServer:
                         delivery_context={
                             "workspace_id": workspace_id,
                             "thread_id": req.thread_id,
+                            "channel_kind": _slack_channel_kind(channel_id),
+                            "mentioned": mentioned_bot,
                         },
                     )
                 else:
@@ -668,6 +680,8 @@ class SlackWebhookServer:
                         delivery_context={
                             "workspace_id": workspace_id,
                             "thread_id": req.thread_id,
+                            "channel_kind": _slack_channel_kind(channel_id),
+                            "mentioned": mentioned_bot,
                         },
                     )
         except Exception as e:
@@ -1039,15 +1053,29 @@ class SlackWebhookServer:
         delivery_context: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Send a message via Slack Web API (chat.postMessage)."""
+        ctx = dict(delivery_context or {})
+        if not thread_ts:
+            thread_ts = str(ctx.get("thread_id", "") or "").strip()
+        decision = decide_reply_visibility(
+            delivery_context=ctx,
+            platform="slack",
+            channel_kind=_slack_channel_kind(channel_id),
+            in_thread=bool(thread_ts),
+            text=text,
+        )
+        if decision.suppressed:
+            logger.info(
+                "Suppressed Slack reply channel=%s reason=%s",
+                channel_id,
+                decision.reason,
+            )
+            return
         try:
             import aiohttp as _aiohttp
         except ImportError:
             logger.warning("aiohttp not available; cannot send Slack reply")
             return
 
-        ctx = dict(delivery_context or {})
-        if not thread_ts:
-            thread_ts = str(ctx.get("thread_id", "") or "").strip()
         installation_id, bot_token, workspace_id = self._resolve_workspace_credentials(
             str(ctx.get("workspace_id", "") or "").strip()
         )

@@ -13,6 +13,7 @@ from services.connector_replay_lifecycle import ConnectorReplayLifecycle
 
 from ..config import ConnectorConfig
 from ..contract import CommandRequest, CommandResponse
+from ..reply_visibility import decide_reply_visibility
 from ..router import CommandRouter
 from ..state import ConnectorState
 
@@ -41,6 +42,15 @@ def _normalize_message_thread_id(value) -> Optional[int]:
     if thread_id <= 0:
         return None
     return thread_id
+
+
+def _telegram_channel_kind(chat_id) -> str:
+    text = str(chat_id or "").strip()
+    if text.startswith("-100"):
+        return "supergroup"
+    if text.startswith("-"):
+        return "group"
+    return "dm"
 
 
 class TelegramPolling:
@@ -255,6 +265,21 @@ class TelegramPolling:
         resp: CommandResponse,
         delivery_context: Optional[dict] = None,
     ) -> bool:
+        decision = decide_reply_visibility(
+            delivery_context=dict(delivery_context or {}),
+            platform="telegram",
+            channel_kind=_telegram_channel_kind(chat_id),
+            text=getattr(resp, "text", ""),
+            has_buttons=bool(getattr(resp, "buttons", None)),
+            has_files=bool(getattr(resp, "files", None)),
+        )
+        if decision.suppressed:
+            logger.info(
+                "Suppressed Telegram reply chat=%s reason=%s",
+                chat_id,
+                decision.reason,
+            )
+            return True
         url = f"{self.base_url}/sendMessage"
         payload = {
             "chat_id": chat_id,
@@ -325,6 +350,19 @@ class TelegramPolling:
     ):
         """Send text message."""
         if not self.session:
+            return
+        decision = decide_reply_visibility(
+            delivery_context=dict(delivery_context or {}),
+            platform="telegram",
+            channel_kind=_telegram_channel_kind(channel_id),
+            text=text,
+        )
+        if decision.suppressed:
+            logger.info(
+                "Suppressed Telegram send_message chat=%s reason=%s",
+                channel_id,
+                decision.reason,
+            )
             return
 
         # Reuse internal logic logic but public
