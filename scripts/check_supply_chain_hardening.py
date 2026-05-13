@@ -17,7 +17,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
-
 AFFECTED_NPM_PREFIXES = (
     "@tanstack/",
     "@uipath/",
@@ -165,8 +164,12 @@ def check_npm_lock(lock_path: Path) -> list[Finding]:
     return findings
 
 
-_REQ_NAME_RE = re.compile(r"^\s*([A-Za-z0-9_.-]+)\s*(?:\[.*?\])?\s*(?:[<>=!~]=|==|~=|>|<|$)")
-_TOML_DEP_RE = re.compile(r"""["']([A-Za-z0-9_.-]+)(?:\[.*?\])?\s*(?:[<>=!~]=|==|~=|>|<|["'])""")
+_REQ_NAME_RE = re.compile(
+    r"^\s*([A-Za-z0-9_.-]+)\s*(?:\[.*?\])?\s*(?:[<>=!~]=|==|~=|>|<|$)"
+)
+_TOML_DEP_RE = re.compile(
+    r"""["']([A-Za-z0-9_.-]+)(?:\[.*?\])?\s*(?:[<>=!~]=|==|~=|>|<|["'])"""
+)
 
 
 def check_python_manifest(path: Path) -> list[Finding]:

@@ -52,7 +52,9 @@ class TestSupplyChainWorkflowPolicy(unittest.TestCase):
             text,
             re.compile(r"uses: Comfy-Org/publish-node-action@[a-f0-9]{40}\b"),
         )
-        self.assertIn("personal_access_token: ${{ secrets.REGISTRY_ACCESS_TOKEN }}", text)
+        self.assertIn(
+            "personal_access_token: ${{ secrets.REGISTRY_ACCESS_TOKEN }}", text
+        )
 
     def test_dependency_review_gate_is_present_for_dependency_diffs(self):
         text = (WORKFLOW_ROOT / "dependency-review.yml").read_text(encoding="utf-8")

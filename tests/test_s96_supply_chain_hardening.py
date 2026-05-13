@@ -65,7 +65,9 @@ class TestSupplyChainHardening(unittest.TestCase):
     def test_affected_python_requirement_is_reported(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "requirements.txt").write_text("mistralai==2.4.6\n", encoding="utf-8")
+            (root / "requirements.txt").write_text(
+                "mistralai==2.4.6\n", encoding="utf-8"
+            )
 
             findings = hardening.run_checks(root)
 
