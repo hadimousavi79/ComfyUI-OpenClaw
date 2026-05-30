@@ -183,6 +183,17 @@ export const ModelManagerTab = {
                             <option value="vae">vae</option>
                             <option value="controlnet">controlnet</option>
                             <option value="embedding">embedding</option>
+                            <option value="text_encoders">text_encoders</option>
+                            <option value="diffusion_models">diffusion_models</option>
+                            <option value="clip_vision">clip_vision</option>
+                            <option value="style_models">style_models</option>
+                            <option value="upscale_models">upscale_models</option>
+                            <option value="audio_encoders">audio_encoders</option>
+                            <option value="background_removal">background_removal</option>
+                            <option value="frame_interpolation">frame_interpolation</option>
+                            <option value="geometry_estimation">geometry_estimation</option>
+                            <option value="optical_flow">optical_flow</option>
+                            <option value="detection">detection</option>
                         </select>
                         <select id="mm-installed" class="openclaw-select openclaw-select">
                             <option value="">all</option>

@@ -140,7 +140,7 @@ Connector diagnostics contract notes:
 
 Model-manager contract notes:
 - `/models/downloads` supports `since_seq` cursor polling and may return deterministic delta metadata (`requested_since_seq`, `effective_since_seq`, `next_since_seq`, truncation/reset hints) alongside the task list
-- `model_type` values SHOULD use current ComfyUI folder keys where applicable, including `text_encoders`, `diffusion_models`, `clip_vision`, `style_models`, `upscale_models`, `vae_approx`, `audio_encoders`, `background_removal`, `frame_interpolation`, and `optical_flow`
+- `model_type` values SHOULD use current ComfyUI folder keys where applicable, including `text_encoders`, `diffusion_models`, `clip_vision`, `style_models`, `upscale_models`, `vae_approx`, `audio_encoders`, `background_removal`, `frame_interpolation`, `geometry_estimation`, `optical_flow`, and `detection`
 - legacy aliases such as `ckpt`, `checkpoints`, `loras`, `controlnets`, `clip`, `text_encoder`, `unet`, `diffusion_model`, `upscale_model`, and `audio_encoder` are normalized before filtering or import destination resolution
 - download creation requires structured provenance metadata (`publisher`, `license`, `source_url`) and a 64-char `expected_sha256`
 - import keeps fail-closed destination/filename validation and re-checks the staged file hash before activation

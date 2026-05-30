@@ -65,7 +65,10 @@ _INPUT_KEY_MAP = {
     "audio_encoder_name": "audio_encoders",
     "background_removal_name": "background_removal",
     "frame_interpolation_name": "frame_interpolation",
+    "geometry_estimation_name": "geometry_estimation",
     "optical_flow_name": "optical_flow",
+    "detection_name": "detection",
+    "face_detection_model": "detection",
     # Add more as discovered
 }
 
@@ -95,7 +98,9 @@ def _resolve_inventory_model_types() -> List[str]:
         "audio_encoders",
         "background_removal",
         "frame_interpolation",
+        "geometry_estimation",
         "optical_flow",
+        "detection",
         "clip",
         "unet",
     ]

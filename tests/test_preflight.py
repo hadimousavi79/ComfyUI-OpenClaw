@@ -132,10 +132,14 @@ class TestPreflightBackend(AioHTTPTestCase):
             {
                 "clip_name": "t5xxl_fp16.safetensors",
                 "unet_name": "flux1-dev.safetensors",
+                "geometry_estimation_name": "moge-vitl.safetensors",
+                "face_detection_model": "blazeface.safetensors",
             },
             {
                 "text_encoders": [],
                 "diffusion_models": [],
+                "geometry_estimation": [],
+                "detection": [],
             },
             missing_counts,
         )
@@ -147,6 +151,14 @@ class TestPreflightBackend(AioHTTPTestCase):
         self.assertEqual(
             missing_counts["diffusion_models:flux1-dev.safetensors"]["type"],
             "diffusion_models",
+        )
+        self.assertEqual(
+            missing_counts["geometry_estimation:moge-vitl.safetensors"]["type"],
+            "geometry_estimation",
+        )
+        self.assertEqual(
+            missing_counts["detection:blazeface.safetensors"]["type"],
+            "detection",
         )
 
     @patch("api.preflight_handler.check_rate_limit")

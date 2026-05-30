@@ -138,9 +138,13 @@ class TestModelManagerService(unittest.TestCase):
         self.assertEqual(_norm_model_type("audio_encoders"), "audio_encoders")
         self.assertEqual(_norm_model_type("background_removal"), "background_removal")
         self.assertEqual(_norm_model_type("frame_interpolation"), "frame_interpolation")
+        self.assertEqual(_norm_model_type("geometry_estimation"), "geometry_estimation")
         self.assertEqual(_norm_model_type("optical_flow"), "optical_flow")
+        self.assertEqual(_norm_model_type("detection"), "detection")
         self.assertEqual(_norm_model_type("unet"), "diffusion_models")
         self.assertEqual(_norm_model_type("clip"), "text_encoders")
+        self.assertEqual(_norm_model_type("geometry"), "geometry_estimation")
+        self.assertEqual(_norm_model_type("detector"), "detection")
         self.assertEqual(_norm_model_type("diffusers"), "other")
 
     @patch(

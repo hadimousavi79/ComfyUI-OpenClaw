@@ -100,7 +100,9 @@ MODEL_TYPE_TO_SUBDIR = {
     "audio_encoders": "audio_encoders",
     "background_removal": "background_removal",
     "frame_interpolation": "frame_interpolation",
+    "geometry_estimation": "geometry_estimation",
     "optical_flow": "optical_flow",
+    "detection": "detection",
 }
 MODEL_TYPE_ALIASES = {
     "ckpt": "checkpoint",
@@ -114,6 +116,8 @@ MODEL_TYPE_ALIASES = {
     "diffusion_model": "diffusion_models",
     "upscale_model": "upscale_models",
     "audio_encoder": "audio_encoders",
+    "geometry": "geometry_estimation",
+    "detector": "detection",
 }
 ALLOWED_MODEL_EXTENSIONS = {".safetensors", ".ckpt", ".pt", ".pth", ".bin", ".onnx"}
 
