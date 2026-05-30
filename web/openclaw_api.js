@@ -250,6 +250,10 @@ export class OpenClawAPI {
         return { ...res, data: historyItem };
     }
 
+    async getPromptQueue() {
+        return this.fetch("/queue");
+    }
+
     // R25: Trace timeline (optional)
     async getTrace(promptId) {
         return this.fetch(`${this._path("/trace")}/${encodeURIComponent(promptId)}`);

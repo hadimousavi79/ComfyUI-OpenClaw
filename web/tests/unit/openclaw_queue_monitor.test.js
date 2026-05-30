@@ -160,4 +160,72 @@ describe("QueueMonitor", () => {
             })
         );
     });
+
+    it("clears stale active prompt ids after reconnect when the queue snapshot no longer lists them", async () => {
+        const ui = { showBanner: vi.fn() };
+        const closedStream = { readyState: 2, close: vi.fn() };
+        const monitor = new QueueMonitor(ui, {
+            api: {
+                getHealth: vi.fn().mockResolvedValue({
+                    ok: true,
+                    data: { stats: { observability: { total_dropped: 0 } } },
+                }),
+                getPromptQueue: vi.fn().mockResolvedValue({
+                    ok: true,
+                    data: {
+                        queue_running: [],
+                        queue_pending: [[1, "still-active"]],
+                    },
+                }),
+                subscribeEvents: vi.fn(() => ({ readyState: 1, close: vi.fn() })),
+            },
+            setIntervalRef: vi.fn(),
+        });
+
+        monitor.handleEvent({ event_type: "running", prompt_id: "stale-job-1" });
+        monitor.handleEvent({ event_type: "queued", prompt_id: "still-active" });
+        monitor.isConnected = false;
+        monitor.es = closedStream;
+
+        await monitor.checkHealth();
+
+        expect(monitor.activePromptIds.has("stale-job-1")).toBe(false);
+        expect(monitor.activePromptIds.has("still-active")).toBe(true);
+        expect(ui.showBanner).toHaveBeenCalledWith(
+            expect.objectContaining({
+                id: "job_reconnect_cleared_stale-jo",
+                severity: "info",
+            })
+        );
+    });
+
+    it("preserves active prompt ids when reconnect queue refresh fails", async () => {
+        const ui = { showBanner: vi.fn() };
+        const monitor = new QueueMonitor(ui, {
+            api: {
+                getHealth: vi.fn().mockResolvedValue({
+                    ok: true,
+                    data: { stats: { observability: { total_dropped: 0 } } },
+                }),
+                getPromptQueue: vi.fn().mockResolvedValue({
+                    ok: false,
+                    error: "queue_unavailable",
+                }),
+                subscribeEvents: vi.fn(() => ({ readyState: 1, close: vi.fn() })),
+            },
+            setIntervalRef: vi.fn(),
+        });
+
+        monitor.handleEvent({ event_type: "running", prompt_id: "active-job" });
+        monitor.isConnected = false;
+
+        await monitor.checkHealth();
+
+        expect(monitor.activePromptIds.has("active-job")).toBe(true);
+        expect(ui.showBanner).not.toHaveBeenCalledWith(
+            expect.objectContaining({
+                id: expect.stringMatching(/^job_reconnect_cleared_/),
+            })
+        );
+    });
 });
