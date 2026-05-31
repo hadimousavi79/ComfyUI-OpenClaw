@@ -91,16 +91,6 @@ Deployment profiles and hardening references:
 
 <details>
 
-<summary><strong>Supply-chain and CI hardening refreshed for dependency and release workflows</strong></summary>
-
-- CI and local validation now include a read-only supply-chain hardening check for known malicious package-family and persistence indicators.
-- Frontend dependency bootstrap paths use lockfile-driven `npm ci` in validation workflows.
-- Release and dependency-review workflows now have tighter permissions, pinned publish-action usage, and PR-time dependency review for dependency manifest changes.
-
-</details>
-
-<details>
-
 <summary><strong>ComfyUI host compatibility, queue recovery, model folders, and asset-output posture refreshed</strong></summary>
 
 - Refreshed the published compatibility baseline for ComfyUI `08e93a31` (post-`v0.22.3`), standalone frontend `1.46.6`, and Desktop `0.9.4` with core `0.22.3` plus embedded frontend `1.43.18`.
@@ -109,6 +99,16 @@ Deployment profiles and hardening references:
 - Aligned Model Manager and preflight diagnostics with current ComfyUI model folder names such as `text_encoders`, `diffusion_models`, `geometry_estimation`, and `detection`, while retaining legacy aliases such as `clip` and `unet`.
 - Kept output previews on the bounded `/history` + `/view` contract, including `asset_hash` and `hash` aliases for hash-backed previews; upstream asset-only identifiers remain explicit fallback states unless a future feature requires direct `/api/assets` use.
 - Updated public release/support/troubleshooting docs to match the refreshed host facts and avoid exposing maintainer-only planning paths or machine-local links.
+
+</details>
+
+<details>
+
+<summary><strong>Supply-chain and CI hardening refreshed for dependency and release workflows</strong></summary>
+
+- CI and local validation now include a read-only supply-chain hardening check for known malicious package-family and persistence indicators.
+- Frontend dependency bootstrap paths use lockfile-driven `npm ci` in validation workflows.
+- Release and dependency-review workflows now have tighter permissions, pinned publish-action usage, and PR-time dependency review for dependency manifest changes.
 
 </details>
 
