@@ -72,7 +72,7 @@ If a result ref only exposes an upstream asset-service identifier and cannot be 
 What this means:
 
 - `asset_api_required` is a bounded compatibility state, not a generic parser failure.
-- Classic history refs and hash-backed refs that still map onto `/view` should continue to preview normally.
+- Classic history refs and hash-backed refs exposed as `asset_hash` or `hash` that still map onto `/view` should continue to preview normally.
 - If an operator workflow starts depending on direct asset-service identifiers, treat that as a contract gap and review [`docs/asset_api_adoption_decision.md`](asset_api_adoption_decision.md) before widening the runtime dependency.
 
 ## Verify audit-chain continuity after restart or rotation

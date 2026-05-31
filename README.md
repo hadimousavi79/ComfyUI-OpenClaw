@@ -101,12 +101,14 @@ Deployment profiles and hardening references:
 
 <details>
 
-<summary><strong>ComfyUI host compatibility, sidebar registration, model folders, and asset-output posture refreshed</strong></summary>
+<summary><strong>ComfyUI host compatibility, queue recovery, model folders, and asset-output posture refreshed</strong></summary>
 
-- Refreshed the published compatibility baseline for current ComfyUI, standalone frontend, and Desktop hosts, while keeping desktop embedded-frontend lag explicit.
+- Refreshed the published compatibility baseline for ComfyUI `08e93a31` (post-`v0.22.3`), standalone frontend `1.46.6`, and Desktop `0.9.4` with core `0.22.3` plus embedded frontend `1.43.18`.
+- Reconciled active prompt state after backend or SSE reconnects so completed prompts are not left in the active queue lane after a host recovery.
 - Updated sidebar registration to prefer the current ComfyUI sidebar store API and keep the deprecated frontend facade as a compatibility fallback for older hosts.
-- Aligned Model Manager and preflight diagnostics with current ComfyUI model folder names such as `text_encoders` and `diffusion_models`, while retaining legacy aliases such as `clip` and `unet`.
-- Kept output previews on the bounded `/history` + `/view` contract; upstream asset-only identifiers remain explicit fallback states unless a future feature requires direct `/api/assets` use.
+- Aligned Model Manager and preflight diagnostics with current ComfyUI model folder names such as `text_encoders`, `diffusion_models`, `geometry_estimation`, and `detection`, while retaining legacy aliases such as `clip` and `unet`.
+- Kept output previews on the bounded `/history` + `/view` contract, including `asset_hash` and `hash` aliases for hash-backed previews; upstream asset-only identifiers remain explicit fallback states unless a future feature requires direct `/api/assets` use.
+- Updated public release/support/troubleshooting docs to match the refreshed host facts and avoid exposing maintainer-only planning paths or machine-local links.
 
 </details>
 
@@ -384,7 +386,7 @@ New shell/tab wiring should use the shared text-safe DOM helpers in `web/opencla
 
 Canonical DOM/class ownership is now centered on `openclaw-*`; legacy `moltbot-*` class compatibility is still supported through shared runtime aliasing instead of duplicated markup in each tab template.
 
-The sidebar now also resolves and stamps its active host surface (`standalone_frontend` vs desktop-embedded host) at mount time so frontend-host drift is explicit and testable instead of inferred from runtime accidents.
+The sidebar now also resolves and stamps its active host surface (`standalone_frontend` vs desktop-embedded host) and reference metadata at mount time, so Desktop `0.9.4` embedded-frontend lag against standalone frontend `1.46.6` is explicit and testable instead of inferred from runtime accidents.
 
 Sidebar registration prefers ComfyUI's current sidebar store API and falls back to the deprecated frontend facade when running on older host bundles. Hosts without either sidebar API use the legacy menu fallback instead of failing extension setup.
 
@@ -397,7 +399,7 @@ The OpenClaw sidebar includes these built-in tabs. Some tabs are capability-gate
 | Tab | What it does | Related docs |
 | --- | --- | --- |
 | `Settings` | Health/config/log visibility, provider/model setup, model connectivity checks, and optional localhost key storage. | [Quick Start](#quick-start-minimal), [API Overview](#api-overview), [Troubleshooting](#troubleshooting) |
-| `Jobs` | Tracks prompt IDs, consumes deterministic event/task cursor metadata for polling, and shows output previews for recent jobs across classic history refs and asset-backed output refs through the same `/view` contract; refs that only expose asset-service identifiers stay explicit as an operator-visible fallback state instead of silently upgrading to `/api/assets`. | [API Overview](#api-overview), [Remote Control (Connector)](#remote-control-connector) |
+| `Jobs` | Tracks prompt IDs, consumes deterministic event/task cursor metadata for polling, and shows output previews for recent jobs across classic history refs plus `asset_hash`/`hash`-backed output refs through the same `/view` contract; refs that only expose asset-service identifiers stay explicit as an operator-visible fallback state instead of silently upgrading to `/api/assets`. | [API Overview](#api-overview), [Remote Control (Connector)](#remote-control-connector) |
 | `Planner` | Uses assist endpoint to generate structured prompt plans (positive/negative/params). | [Configure an LLM key](#1-configure-an-llm-key-for-plannerrefinervision-helpers), [Nodes](#nodes) |
 | `Refiner` | Refines existing prompts with optional image context and issue/goal input. | [Configure an LLM key](#1-configure-an-llm-key-for-plannerrefinervision-helpers), [Nodes](#nodes) |
 | `Variants` | Local helper for generating batch variant parameter JSON (seed/range-style sweeps). | [Nodes](#nodes), [Operator UX Features](#operator-ux-features) |
@@ -406,7 +408,7 @@ The OpenClaw sidebar includes these built-in tabs. Some tabs are capability-gate
 | `Explorer` | Inventory/preflight diagnostics and snapshot/checkpoint troubleshooting workflows, including snapshot-first inventory refresh state (`snapshot_ts`, `scan_state`, `stale`, `last_error`) and suppressed inactive-branch findings. | [Operator UX Features](#operator-ux-features), [Troubleshooting](#troubleshooting) |
 | `Packs` | Dedicated pack lifecycle tab for import/export/delete under admin boundary. | [API Overview](#api-overview) |
 | `PNG Info` | Inspects saved generation images through drag-and-drop, file picker, or scoped paste, parses A1111 infotext plus ComfyUI `prompt` / `workflow` metadata, shows extracted prompt and generation fields when recoverable, and keeps raw metadata visible for operator inspection. | [API Overview](#api-overview), [Troubleshooting](#troubleshooting) |
-| `Model Manager` | Searches model catalog/install records, queues managed downloads, monitors task lifecycle, and imports completed tasks into the managed install root with current ComfyUI folder-key normalization plus legacy type aliases. | [API Overview](#api-overview), [Troubleshooting](#troubleshooting) |
+| `Model Manager` | Searches model catalog/install records, queues managed downloads, monitors task lifecycle, and imports completed tasks into the managed install root with current ComfyUI folder-key normalization, including `geometry_estimation` and `detection`, plus legacy type aliases. | [API Overview](#api-overview), [Troubleshooting](#troubleshooting) |
 | `Parameter Lab` | Runs bounded sweep/compare experiments, stores history, and replays parameters back into the graph. | [Operator UX Features](#operator-ux-features) |
 
 ## Operator UX Features
@@ -499,8 +501,8 @@ Key operational notes:
 
 - Observability remains token-gated for remote access and redacts provider reasoning-like content plus marked internal maintenance/helper content by default.
 - Event/model-download polling and preflight inventory are snapshot/cursor-driven contracts; clients should consume `snapshot_ts`, `scan_state`, `stale`, and cursor metadata instead of assuming full-refresh polling.
-- Model Manager and preflight consumers should use current ComfyUI folder keys for model types where possible; compatibility aliases such as `clip`, `unet`, `ckpt`, and plural legacy names are normalized before lookup/import.
-- Output/history-facing consumers should keep using the bounded `/history` + `/view` contract; refs that only upstream asset services can resolve remain explicit `asset_api_required` compatibility states.
+- Model Manager and preflight consumers should use current ComfyUI folder keys for model types where possible, including `text_encoders`, `diffusion_models`, `geometry_estimation`, and `detection`; compatibility aliases such as `clip`, `unet`, `ckpt`, and plural legacy names are normalized before lookup/import.
+- Output/history-facing consumers should keep using the bounded `/history` + `/view` contract; `asset_hash` and `hash` values that map to `blake3:...` preview normally, while refs that only upstream asset services can resolve remain explicit `asset_api_required` compatibility states.
 - Connector diagnostics expose redacted token references only, and `/openclaw/connector/extraction-contract` is structural packaging metadata and static SecretRef policy rather than a live installation-health, environment, or token-status feed.
 
 ## Advanced Security and Runtime Setup

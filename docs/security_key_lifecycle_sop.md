@@ -185,7 +185,7 @@ Example commands:
 
 ```bash
 python scripts/run_crypto_lifecycle_drills.py --pretty
-python scripts/run_crypto_lifecycle_drills.py --scenarios planned_rotation,emergency_revoke --output .planning/logs/crypto_drills.json --pretty
+python scripts/run_crypto_lifecycle_drills.py --scenarios planned_rotation,emergency_revoke --output crypto_drills.json --pretty
 ```
 
 Evidence bundle contract (JSON):

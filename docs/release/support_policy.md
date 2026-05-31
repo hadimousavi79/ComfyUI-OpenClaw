@@ -34,7 +34,7 @@
 
 ## Compatibility Anchor Policy
 
-- The authoritative compatibility reference points are recorded in [`compatibility_matrix.md`](/mnt/c/Users/Ray/Documents/我的專案/ComfyUI-OpenClaw/docs/release/compatibility_matrix.md).
+- The authoritative compatibility reference points are recorded in [`compatibility_matrix.md`](compatibility_matrix.md).
 - `ComfyUI`, standalone `ComfyUI_frontend`, and `desktop` are tracked as separate host surfaces.
 - Desktop should not be assumed to match standalone frontend HEAD; the embedded frontend version may intentionally lag and must be evaluated against its own recorded bundle anchor.
 - Upstream reference refreshes should update the matrix anchors before being treated as the new default support baseline.

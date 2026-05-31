@@ -7,12 +7,13 @@ Newest entries appear first.
 
 <details>
 
-<summary><strong>ComfyUI host compatibility, sidebar registration, model folders, and asset-output posture refreshed</strong></summary>
+<summary><strong>ComfyUI host compatibility, queue recovery, model folders, and asset-output posture refreshed</strong></summary>
 
-- Refreshed the published compatibility baseline for current ComfyUI, standalone frontend, and Desktop hosts, while keeping desktop embedded-frontend lag explicit.
+- Refreshed the published compatibility baseline for ComfyUI `08e93a31` (post-`v0.22.3`), standalone frontend `1.46.6`, and Desktop `0.9.4` with core `0.22.3` plus embedded frontend `1.43.18`.
+- Reconciled active prompt state after backend or SSE reconnects so completed prompts are not left in the active queue lane after a host recovery.
 - Updated sidebar registration to prefer the current ComfyUI sidebar store API and keep the deprecated frontend facade as a compatibility fallback for older hosts.
-- Aligned Model Manager and preflight diagnostics with current ComfyUI model folder names such as `text_encoders` and `diffusion_models`, while retaining legacy aliases such as `clip` and `unet`.
-- Kept output previews on the bounded `/history` + `/view` contract; upstream asset-only identifiers remain explicit fallback states unless a future feature requires direct `/api/assets` use.
+- Aligned Model Manager and preflight diagnostics with current ComfyUI model folder names such as `text_encoders`, `diffusion_models`, `geometry_estimation`, and `detection`, while retaining legacy aliases such as `clip` and `unet`.
+- Kept output previews on the bounded `/history` + `/view` contract, including `asset_hash` and `hash` aliases for hash-backed previews; upstream asset-only identifiers remain explicit fallback states unless a future feature requires direct `/api/assets` use.
 
 </details>
 
@@ -217,7 +218,7 @@ Newest entries appear first.
 
 <summary><strong>Planning, startup/config hardening, compatibility governance, and frontend hotspot reduction batch</strong></summary>
 
-- Normalized the active planning surface onto `.planning/roadmap.md` and clarified the docs-only test-flow exemption in the project SOP guidance.
+- Normalized the active maintainer planning surface and clarified the docs-only test-flow exemption in the project SOP guidance.
 - Hardened route/bootstrap registration around a declarative manifest and centralized validation seam so startup wiring is less fragile under delayed readiness and import-order edge cases.
 - Completed the next config-unification pass around one effective-config read facade, reducing precedence drift across backend and frontend-facing config consumers.
 - Centralized legacy compatibility handling for backend headers and frontend API/storage fallbacks so deprecation behavior is explicit, shared, and regression-covered.
